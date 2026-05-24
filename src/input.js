@@ -1,0 +1,60 @@
+(function (SaunaTim) {
+  const { LAUNCH_POINTS, PHYSICS, VIEWPORT } = SaunaTim.config;
+  const { distance } = SaunaTim.utils;
+
+  function wireInput(game) {
+    const canvas = game.canvas;
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (game.state.gameOver) {
+        game.reset();
+        return;
+      }
+
+      if (game.state.turn !== 0 || game.state.projectile || game.state.aiThinking) return;
+
+      const pointer = getCanvasPoint(canvas, event);
+      if (distance(pointer.x, pointer.y, LAUNCH_POINTS.player.x, LAUNCH_POINTS.player.y) < 190) {
+        game.state.dragging = true;
+        game.state.dragNow = pointer;
+        game.state.wobble = 0;
+        canvas.setPointerCapture(event.pointerId);
+      }
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (game.state.dragging) {
+        game.state.dragNow = getCanvasPoint(canvas, event);
+      }
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      game.launchPlayerShot();
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      game.cancelDrag();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space" && game.state.gameOver) game.reset();
+    });
+  }
+
+  function getCanvasPoint(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) * VIEWPORT.width / rect.width,
+      y: (event.clientY - rect.top) * VIEWPORT.height / rect.height
+    };
+  }
+
+  function isThrowStrongEnough(shot) {
+    return Math.hypot(shot.vx, shot.vy) >= PHYSICS.minThrowSpeed;
+  }
+
+  SaunaTim.input = {
+    isThrowStrongEnough,
+    wireInput
+  };
+})(window.SaunaTim = window.SaunaTim || {});

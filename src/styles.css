@@ -1,0 +1,75 @@
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #100905;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  user-select: none;
+  touch-action: none;
+}
+
+body {
+  min-height: 100svh;
+}
+
+#wrap {
+  position: relative;
+  width: 100vw;
+  height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle, #332012, #070403);
+}
+
+#game {
+  box-sizing: border-box;
+  display: block;
+  width: min(100vw, calc(100svh * 16 / 9), 1280px);
+  max-height: min(100svh, 720px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  background: #1b1009;
+  border: 2px solid #090503;
+  box-shadow: 0 28px 90px rgb(0 0 0 / 70%);
+  cursor: crosshair;
+}
+
+#orientationHint {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 24px;
+  color: #fff1a8;
+  background: rgb(7 4 3 / 86%);
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+  pointer-events: none;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+  #game {
+    opacity: .2;
+  }
+
+  #orientationHint {
+    display: grid;
+  }
+}
+
+@supports (height: 100dvh) {
+  body,
+  #wrap {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  #game {
+    width: min(100vw, calc(100dvh * 16 / 9), 1280px);
+    max-height: min(100dvh, 720px);
+  }
+}
