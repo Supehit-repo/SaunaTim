@@ -1,5 +1,5 @@
 (function (SaunaTim) {
-  const { ASSETS, AIM, LAUNCH_POINTS, MAX_HP, PHYSICS, VIEWPORT } = SaunaTim.config;
+  const { ASSETS, AIM, LAUNCH_POINTS, MAX_HP, PHYSICS, VIEWPORT, WINS_TO_MATCH } = SaunaTim.config;
   const { loadImage } = SaunaTim.assets;
   const { createGameState, resetGameState } = SaunaTim.state;
   const { clamp } = SaunaTim.utils;
@@ -44,10 +44,15 @@
       const launch = LAUNCH_POINTS.player;
       const dx = clamp(dragNow.x - launch.x, -150, 150);
       const dy = clamp(dragNow.y - launch.y, -150, 150);
+      const aimPenalty = clamp(this.state.aimFrames / 260, 0, 1);
 
       return {
-        vx: -dx * 0.126 + Math.sin(this.state.phase * 1.5) * this.state.wobble * 0.035,
-        vy: -dy * 0.126 + Math.cos(this.state.phase * 1.1) * this.state.wobble * 0.028
+        vx: -dx * 0.126
+          + Math.sin(this.state.phase * 1.25) * this.state.wobble * 0.006
+          + Math.sin(this.state.phase * .62) * aimPenalty * .28,
+        vy: -dy * 0.126
+          + Math.cos(this.state.phase * .95) * this.state.wobble * 0.005
+          + Math.cos(this.state.phase * .7) * aimPenalty * .22
       };
     }
 
@@ -115,15 +120,54 @@
       this.state.scoreFlash = 120;
 
       if (defender.hp >= MAX_HP) {
-        this.state.gameOver = true;
+        this.finishRound(attackerIndex);
         return;
       }
 
       this.state.turn = 1 - this.state.turn;
-      if (this.state.turn === 0) this.state.round++;
 
       this.state.aiThinking = false;
       this.scheduleTurnMessage();
+    }
+
+    finishRound(winnerIndex) {
+      const winner = this.state.players[winnerIndex];
+      winner.wins++;
+      this.state.msg = `${winner.name} voitti kierroksen`;
+      this.state.lastScoreText = this.state.msg;
+
+      if (winner.wins >= WINS_TO_MATCH) {
+        this.state.gameOver = true;
+        return;
+      }
+
+      window.setTimeout(() => this.startNextRound(), 1400);
+    }
+
+    startNextRound() {
+      if (this.state.gameOver) return;
+
+      const wins = this.state.players.map((player) => player.wins);
+      this.state.players.forEach((player) => {
+        player.hp = 0;
+        player.score = 0;
+      });
+      this.state.round++;
+      this.state.turn = this.state.round % 2 === 0 ? 1 : 0;
+      this.state.projectile = null;
+      this.state.dragging = false;
+      this.state.dragNow = null;
+      this.state.aimFrames = 0;
+      this.state.aiThinking = false;
+      this.state.scoreFlash = 0;
+      this.state.particles = [];
+      this.state.texts = [];
+      this.state.players.forEach((player, index) => {
+        player.wins = wins[index];
+      });
+      this.state.msg = this.state.turn === 0 ? "Sinun vuoro" : "Ivan aloittaa";
+
+      if (this.state.turn === 1) this.scheduleNpcThrow();
     }
 
     scheduleTurnMessage() {
@@ -170,8 +214,9 @@
     update() {
       this.state.phase += 0.16;
       this.state.wobble = this.state.dragging
-        ? clamp(this.state.wobble + .16, 0, 11)
+        ? clamp(this.state.wobble + .045, 0, 2.4)
         : this.state.wobble * .88;
+      if (this.state.dragging) this.state.aimFrames++;
 
       if (this.state.scoreFlash > 0) this.state.scoreFlash--;
 

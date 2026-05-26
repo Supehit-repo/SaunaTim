@@ -9,7 +9,8 @@
     minThrowSpeed: 1.6
   };
 
-  const MAX_HP = 500;
+  const MAX_HP = 350;
+  const WINS_TO_MATCH = 2;
 
   const AIM = {
     x1: 525,
@@ -35,6 +36,7 @@
     LAUNCH_POINTS,
     MAX_HP,
     PHYSICS,
+    WINS_TO_MATCH,
     VIEWPORT
   };
 })(window.SaunaTim = window.SaunaTim || {});

@@ -1,10 +1,13 @@
 (function (SaunaTim) {
-  const { MAX_HP, VIEWPORT } = SaunaTim.config;
+  const { MAX_HP, VIEWPORT, WINS_TO_MATCH } = SaunaTim.config;
   const { roundedRect } = SaunaTim.render.primitives;
 
   function drawHud(ctx, state) {
     drawHpBox(ctx, 126, 43, 318, 52, state.players[0]);
     drawHpBox(ctx, 836, 43, 318, 52, state.players[1]);
+    drawTagline(ctx);
+    drawWins(ctx, 285, 119, state.players[0]);
+    drawWins(ctx, 995, 119, state.players[1]);
     drawRoundAndMessage(ctx, state);
     drawScoreFlash(ctx, state);
     if (state.gameOver) drawGameOver(ctx, state);
@@ -29,21 +32,48 @@
     ctx.lineWidth = 5;
     ctx.font = "900 25px system-ui";
     ctx.textAlign = "center";
-    ctx.strokeText(`${remaining} / 500 HP`, x + width / 2, y + 35);
-    ctx.fillText(`${remaining} / 500 HP`, x + width / 2, y + 35);
+    ctx.strokeText(`${remaining} / ${MAX_HP} HP`, x + width / 2, y + 35);
+    ctx.fillText(`${remaining} / ${MAX_HP} HP`, x + width / 2, y + 35);
+    ctx.restore();
+  }
+
+  function drawTagline(ctx) {
+    ctx.save();
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "rgba(0,0,0,.82)";
+    ctx.lineWidth = 3;
+    ctx.font = "800 15px system-ui";
+    ctx.textAlign = "center";
+    const text = "Heitä vettä kiukaalle ja paahda vastustaja!";
+    ctx.strokeText(text, 640, 78);
+    ctx.fillText(text, 640, 78);
+    ctx.restore();
+  }
+
+  function drawWins(ctx, x, y, player) {
+    ctx.save();
+    ctx.fillStyle = "#fff1a8";
+    ctx.strokeStyle = "rgba(0,0,0,.85)";
+    ctx.lineWidth = 4;
+    ctx.font = "900 19px system-ui";
+    ctx.textAlign = "center";
+    const text = `Voitot: ${player.wins} / ${WINS_TO_MATCH}`;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
     ctx.restore();
   }
 
   function drawRoundAndMessage(ctx, state) {
     ctx.save();
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#fff1a8";
     ctx.strokeStyle = "rgba(0,0,0,.85)";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 3;
     ctx.textAlign = "center";
-    ctx.font = "900 46px system-ui";
-    ctx.strokeText(state.round, 640, 170);
-    ctx.fillText(state.round, 640, 170);
+    ctx.font = "800 18px system-ui";
+    ctx.strokeText(`Kierros: ${state.round}`, 640, 145);
+    ctx.fillText(`Kierros: ${state.round}`, 640, 145);
 
+    ctx.fillStyle = "#fff";
     ctx.font = "900 26px system-ui";
     ctx.strokeText(state.msg, 640, 676);
     ctx.fillText(state.msg, 640, 676);
@@ -80,7 +110,7 @@
     ctx.textAlign = "center";
     ctx.font = "900 64px system-ui";
 
-    const winner = state.players[0].hp >= MAX_HP ? "IVAN voitti!" : "SINÄ voitit!";
+    const winner = state.players[0].wins >= WINS_TO_MATCH ? "SINÄ voitit!" : "IVAN voitti!";
     ctx.strokeText(winner, VIEWPORT.width / 2, VIEWPORT.height / 2 - 10);
     ctx.fillText(winner, VIEWPORT.width / 2, VIEWPORT.height / 2 - 10);
 

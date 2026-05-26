@@ -17,6 +17,7 @@
       if (distance(pointer.x, pointer.y, LAUNCH_POINTS.player.x, LAUNCH_POINTS.player.y) < 190) {
         game.state.dragging = true;
         game.state.dragNow = pointer;
+        game.state.aimFrames = 0;
         game.state.wobble = 0;
         canvas.setPointerCapture(event.pointerId);
       }

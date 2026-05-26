@@ -42,6 +42,8 @@
     ctx.fillStyle = fire;
     roundedRect(ctx, 582, 528, 116, 42, 5, true, false);
 
+    drawFirewood(ctx);
+
     ctx.strokeStyle = "rgba(0,0,0,.48)";
     ctx.lineWidth = 4;
     for (let i = 0; i < 8; i++) {
@@ -52,6 +54,35 @@
     }
 
     drawStones(ctx);
+    ctx.restore();
+  }
+
+  function drawFirewood(ctx) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#5f2f13";
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(596, 562);
+    ctx.lineTo(638, 535);
+    ctx.moveTo(623, 566);
+    ctx.lineTo(682, 536);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#2a1308";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(596, 562);
+    ctx.lineTo(638, 535);
+    ctx.moveTo(623, 566);
+    ctx.lineTo(682, 536);
+    ctx.stroke();
+
+    ctx.fillStyle = "#c98945";
+    ctx.beginPath();
+    ctx.ellipse(596, 562, 7, 5, -.55, 0, Math.PI * 2);
+    ctx.ellipse(623, 566, 7, 5, -.48, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 

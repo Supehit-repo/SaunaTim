@@ -1,9 +1,11 @@
 (function (SaunaTim) {
   const { VIEWPORT } = SaunaTim.config;
-  const { drawHeatOverlay } = SaunaTim.render.characters;
+  const { drawBackgroundCleanup } = SaunaTim.render.backgroundCleanup;
+  const { drawSkinRedness } = SaunaTim.render.characters;
   const { drawEffects } = SaunaTim.render.effects;
   const { drawHud } = SaunaTim.render.hud;
   const { drawProjectile } = SaunaTim.render.projectile;
+  const { drawProps } = SaunaTim.render.props;
   const { drawStove } = SaunaTim.render.stove;
   const { drawAimArc } = SaunaTim.render.trajectory;
 
@@ -17,8 +19,10 @@
       ctx.fillRect(0, 0, VIEWPORT.width, VIEWPORT.height);
     }
 
+    drawBackgroundCleanup(ctx);
+    drawProps(ctx);
     drawStove(ctx);
-    drawHeatOverlay(ctx, state.players);
+    drawSkinRedness(ctx, state.players);
     drawAimArc(ctx, state, shotFromDrag);
     drawProjectile(ctx, state.projectile);
     drawEffects(ctx, state);
