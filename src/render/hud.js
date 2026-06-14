@@ -3,8 +3,8 @@
   const { roundedRect } = SaunaTim.render.primitives;
 
   function drawHud(ctx, state) {
-    drawHpBox(ctx, 126, 43, 318, 52, state.players[0]);
-    drawHpBox(ctx, 836, 43, 318, 52, state.players[1]);
+    drawHeartBox(ctx, 126, 43, 318, 52, state.players[0]);
+    drawHeartBox(ctx, 836, 43, 318, 52, state.players[1]);
     drawTagline(ctx);
     drawWins(ctx, 285, 119, state.players[0]);
     drawWins(ctx, 995, 119, state.players[1]);
@@ -13,8 +13,12 @@
     if (state.gameOver) drawGameOver(ctx, state);
   }
 
-  function drawHpBox(ctx, x, y, width, height, player) {
+  function drawHeartBox(ctx, x, y, width, height, player) {
     const remaining = MAX_HP - player.hp;
+    const heat = player.hp / MAX_HP;
+    const pulse = player.heartPulse > 0 ? Math.sin(player.heartPulse * .52) * player.heartPulse / 44 : 0;
+    const scale = 1 + Math.max(0, pulse);
+
     ctx.save();
     ctx.fillStyle = "#23120b";
     ctx.strokeStyle = "#d9964d";
@@ -24,16 +28,52 @@
     ctx.fillStyle = "#120c09";
     roundedRect(ctx, x + 8, y + 9, width - 16, height - 18, 8, true, false);
 
-    ctx.fillStyle = "#e4433c";
-    roundedRect(ctx, x + 8, y + 9, (width - 16) * (remaining / MAX_HP), height - 18, 8, true, false);
+    ctx.save();
+    ctx.beginPath();
+    roundedRect(ctx, x + 8, y + 9, (width - 16) * (remaining / MAX_HP), height - 18, 8, false, false);
+    ctx.clip();
+    const healthGradient = ctx.createLinearGradient(x + 8, y, x + width - 8, y);
+    healthGradient.addColorStop(0, "#ffdf62");
+    healthGradient.addColorStop(.55, "#ff7b30");
+    healthGradient.addColorStop(1, "#e4433c");
+    ctx.fillStyle = healthGradient;
+    ctx.fillRect(x + 8, y + 9, width - 16, height - 18);
+    ctx.restore();
 
     ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "rgba(0,0,0,.85)";
+    ctx.strokeStyle = "rgba(0,0,0,.88)";
     ctx.lineWidth = 5;
-    ctx.font = "900 25px system-ui";
-    ctx.textAlign = "center";
-    ctx.strokeText(`${remaining} / ${MAX_HP} HP`, x + width / 2, y + 35);
-    ctx.fillText(`${remaining} / ${MAX_HP} HP`, x + width / 2, y + 35);
+    ctx.font = "900 26px system-ui";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.strokeText(`${remaining}/${MAX_HP}`, x + width / 2 + 24, y + 29);
+    ctx.fillText(`${remaining}/${MAX_HP}`, x + width / 2 + 24, y + 29);
+
+    ctx.translate(x + width / 2 + 60, y + 29);
+    ctx.scale(scale, scale);
+    drawHeart(ctx, 0, 0, 15 + heat * 3);
+
+    ctx.restore();
+  }
+
+  function drawHeart(ctx, x, y, size) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#f0383e";
+    ctx.strokeStyle = "rgba(0,0,0,.88)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, size * .62);
+    ctx.bezierCurveTo(-size * 1.18, -size * .06, -size * .68, -size * .86, 0, -size * .35);
+    ctx.bezierCurveTo(size * .68, -size * .86, size * 1.18, -size * .06, 0, size * .62);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,.28)";
+    ctx.beginPath();
+    ctx.ellipse(-size * .28, -size * .23, size * .17, size * .11, -.55, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -88,7 +128,7 @@
     ctx.fillStyle = "rgba(0,0,0,.72)";
     ctx.strokeStyle = "#d9964d";
     ctx.lineWidth = 4;
-    roundedRect(ctx, 490, 245, 300, 62, 14, true, true);
+    roundedRect(ctx, 420, 245, 440, 62, 14, true, true);
 
     ctx.fillStyle = "#fff1a8";
     ctx.strokeStyle = "rgba(0,0,0,.85)";

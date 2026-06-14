@@ -6,6 +6,8 @@
     const canvas = game.canvas;
 
     canvas.addEventListener("pointerdown", (event) => {
+      game.startAudio();
+
       if (game.state.gameOver) {
         game.reset();
         return;
@@ -38,6 +40,7 @@
     });
 
     window.addEventListener("keydown", (event) => {
+      if (event.code === "Space") game.startAudio();
       if (event.code === "Space" && game.state.gameOver) game.reset();
     });
   }

@@ -5,7 +5,8 @@
   const { clamp } = SaunaTim.utils;
   const { wireInput, isThrowStrongEnough } = SaunaTim.input;
   const { drawScene } = SaunaTim.render.scene;
-  const { addFloatingText, addSteam, updateEffects } = SaunaTim.systems.effects;
+  const { addConfetti, addFireBurst, addFloatingText, addSteam, updateEffects } = SaunaTim.systems.effects;
+  const { createGameAudio } = SaunaTim.systems.audio;
   const { createNpcThrow } = SaunaTim.systems.npc;
   const { createProgressionTracker, recordThrowResult } = SaunaTim.systems.progression;
   const { scoreAt } = SaunaTim.systems.scoring;
@@ -17,6 +18,7 @@
       this.background = loadImage(ASSETS.background);
       this.state = createGameState();
       this.progression = createProgressionTracker();
+      this.audio = createGameAudio();
       this.npcTimer = null;
 
       wireInput(this);
@@ -24,6 +26,10 @@
 
     start() {
       this.loop();
+    }
+
+    startAudio() {
+      this.audio.ensureStarted();
     }
 
     reset() {
@@ -72,8 +78,9 @@
         y: LAUNCH_POINTS.player.y,
         vx: shot.vx,
         vy: shot.vy,
-        trail: []
+        owner: 0
       };
+      this.state.ladleSwing[0] = SaunaTim.render.props.SWING_DURATION;
       this.state.msg = "Sinä heität";
     }
 
@@ -81,7 +88,6 @@
       if (this.state.projectile || this.state.gameOver || this.state.turn !== 1 || this.state.aiThinking) return;
 
       this.state.aiThinking = true;
-      this.state.msg = "Ivan tähtää";
 
       this.npcTimer = window.setTimeout(() => {
         this.npcTimer = null;
@@ -91,7 +97,9 @@
         }
 
         this.state.projectile = createNpcThrow();
+        this.state.projectile.owner = 1;
         this.state.msg = "Ivan heittää";
+        this.state.ladleSwing[1] = SaunaTim.render.props.SWING_DURATION;
         this.state.aiThinking = false;
       }, 700);
     }
@@ -106,11 +114,22 @@
 
       if (score > 0) {
         defender.hp = clamp(defender.hp + score, 0, MAX_HP);
+        defender.heartPulse = 28;
         attacker.score += score;
         this.state.lastScoreText = `${attacker.name}: +${score} p`;
         this.state.msg = this.state.lastScoreText;
         addFloatingText(this.state, `+${score}`, AIM.x, AIM.y - 85);
         addSteam(this.state, score);
+        this.audio.playHiss(score);
+
+        if (score >= 90) {
+          this.state.fireBoost = Math.max(this.state.fireBoost, 160);
+          addFireBurst(this.state, score);
+        }
+
+        if (defenderIndex === 1 && MAX_HP - defender.hp <= 100) {
+          this.audio.playIvanGrunt();
+        }
       } else {
         this.state.lastScoreText = `${attacker.name}: OHI`;
         this.state.msg = this.state.lastScoreText;
@@ -133,8 +152,10 @@
     finishRound(winnerIndex) {
       const winner = this.state.players[winnerIndex];
       winner.wins++;
-      this.state.msg = `${winner.name} voitti kierroksen`;
+      this.state.msg = winnerIndex === 0 ? "Sinä voitit kierroksen!" : "Ivan voitti kierroksen!";
       this.state.lastScoreText = this.state.msg;
+      addConfetti(this.state, winnerIndex);
+      this.audio.playFanfare();
 
       if (winner.wins >= WINS_TO_MATCH) {
         this.state.gameOver = true;
@@ -151,6 +172,7 @@
       this.state.players.forEach((player) => {
         player.hp = 0;
         player.score = 0;
+        player.heartPulse = 0;
       });
       this.state.round++;
       this.state.turn = this.state.round % 2 === 0 ? 1 : 0;
@@ -160,12 +182,14 @@
       this.state.aimFrames = 0;
       this.state.aiThinking = false;
       this.state.scoreFlash = 0;
+      this.state.fireBoost = 0;
+      this.state.ladleSwing = [0, 0];
       this.state.particles = [];
       this.state.texts = [];
       this.state.players.forEach((player, index) => {
         player.wins = wins[index];
       });
-      this.state.msg = this.state.turn === 0 ? "Sinun vuoro" : "Ivan aloittaa";
+      this.state.msg = this.state.turn === 0 ? "Sinun vuorosi" : "Ivan aloittaa";
 
       if (this.state.turn === 1) this.scheduleNpcThrow();
     }
@@ -173,7 +197,7 @@
     scheduleTurnMessage() {
       window.setTimeout(() => {
         if (this.state.gameOver) return;
-        this.state.msg = this.state.turn === 0 ? "Sinun vuoro" : "Ivan tähtää";
+        this.state.msg = this.state.turn === 0 ? "Sinun vuorosi" : "";
         if (this.state.turn === 1) this.scheduleNpcThrow();
       }, 850);
     }
@@ -181,9 +205,6 @@
     updateProjectile() {
       const projectile = this.state.projectile;
       if (!projectile) return;
-
-      projectile.trail.unshift({ x: projectile.x, y: projectile.y });
-      projectile.trail = projectile.trail.slice(0, 26);
 
       const previousX = projectile.x;
       const previousY = projectile.y;
@@ -219,6 +240,11 @@
       if (this.state.dragging) this.state.aimFrames++;
 
       if (this.state.scoreFlash > 0) this.state.scoreFlash--;
+      if (this.state.fireBoost > 0) this.state.fireBoost--;
+      this.state.ladleSwing = this.state.ladleSwing.map((swing) => Math.max(0, swing - 1));
+      this.state.players.forEach((player) => {
+        if (player.heartPulse > 0) player.heartPulse--;
+      });
 
       this.updateProjectile();
       updateEffects(this.state);

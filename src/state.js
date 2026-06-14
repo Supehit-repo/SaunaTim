@@ -2,8 +2,8 @@
   function createGameState() {
     return {
       players: [
-        { name: "SINÄ", hp: 0, score: 0, wins: 0 },
-        { name: "IVAN", hp: 0, score: 0, wins: 0 }
+        { name: "SINÄ", hp: 0, score: 0, wins: 0, heartPulse: 0 },
+        { name: "IVAN", hp: 0, score: 0, wins: 0, heartPulse: 0 }
       ],
       turn: 0,
       round: 1,
@@ -18,6 +18,8 @@
       msg: "Vedä ja päästä",
       lastScoreText: "",
       scoreFlash: 0,
+      fireBoost: 0,
+      ladleSwing: [0, 0],
       particles: [],
       texts: []
     };

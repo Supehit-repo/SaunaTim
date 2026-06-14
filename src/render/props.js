@@ -1,7 +1,36 @@
 (function (SaunaTim) {
-  function drawProps(ctx) {
-    drawHandLadle(ctx, 200, 454, 253, 419, -0.36);
-    drawHandLadle(ctx, 1052, 454, 995, 419, 0.36);
+  const SWING_DURATION = 36;
+
+  function drawProps(ctx, state) {
+    drawPlayerLadle(ctx, state, 0);
+    drawPlayerLadle(ctx, state, 1);
+  }
+
+  function drawPlayerLadle(ctx, state, playerIndex) {
+    const swing = state.ladleSwing[playerIndex] || 0;
+    const progress = Math.max(0, Math.min(1, (SWING_DURATION - swing) / SWING_DURATION));
+    const motion = swing > 0 ? Math.sin(progress * Math.PI) : 0;
+
+    if (playerIndex === 0) {
+      drawHandLadle(
+        ctx,
+        200,
+        454,
+        253 + motion * 48,
+        419 - motion * 58,
+        -0.36 - motion * .86
+      );
+      return;
+    }
+
+    drawHandLadle(
+      ctx,
+      1052,
+      454,
+      995 - motion * 48,
+      419 - motion * 58,
+      0.36 + motion * .86
+    );
   }
 
   function drawHandLadle(ctx, handX, handY, bowlX, bowlY, rotation) {
@@ -39,6 +68,7 @@
   }
 
   SaunaTim.render.props = {
-    drawProps
+    drawProps,
+    SWING_DURATION
   };
 })(window.SaunaTim = window.SaunaTim || {});

@@ -3,7 +3,6 @@
     removeTagline(ctx);
     removeSteamIcons(ctx);
     removeRoundSign(ctx);
-    removeStaticAimArc(ctx);
     softenCatapultHardware(ctx);
     removeTurnTimer(ctx);
     replaceInstructionText(ctx);
@@ -108,34 +107,6 @@
     clonePatch(ctx, { x: 760, y: 92, w: 132, h: 22 }, { x: 574, y: 92, w: 132, h: 22 }, 1);
     clonePatch(ctx, { x: 760, y: 102, w: 220, h: 70 }, { x: 530, y: 102, w: 220, h: 70 }, 1);
     woodPatch(ctx, 530, 102, 220, 70, "rgba(47, 22, 9, .22)", "rgba(83, 39, 17, .2)", 1);
-  }
-
-  function removeStaticAimArc(ctx) {
-    const dots = [
-      [318, 385], [337, 373], [358, 361], [379, 351], [400, 341],
-      [423, 332], [447, 324], [471, 318], [496, 313], [522, 310],
-      [548, 308], [573, 311]
-    ];
-    dots.forEach(([x, y]) => coverWallDot(ctx, x, y, 11));
-    coverWallDot(ctx, 595, 310, 18, "rgba(83, 75, 65, .78)");
-  }
-
-  function coverWallDot(ctx, x, y, radius, color) {
-    ctx.save();
-    ctx.fillStyle = color || "rgba(73, 35, 15, .98)";
-    ctx.beginPath();
-    ctx.arc(x, y, radius * .72, 0, Math.PI * 2);
-    ctx.fill();
-
-    const gradient = ctx.createRadialGradient(x, y, 1, x, y, radius);
-    gradient.addColorStop(0, color || "rgba(78, 38, 17, .96)");
-    gradient.addColorStop(.72, color || "rgba(68, 32, 14, .9)");
-    gradient.addColorStop(1, "rgba(61, 28, 12, .05)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 
   function softenCatapultHardware(ctx) {

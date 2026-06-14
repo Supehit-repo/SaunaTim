@@ -23,8 +23,7 @@
       x: launch.x,
       y: launch.y,
       vx: (targetX - launch.x) / frames,
-      vy: (AIM.y - launch.y - 0.5 * PHYSICS.gravity * frames * frames) / frames,
-      trail: []
+      vy: (AIM.y - launch.y - 0.5 * PHYSICS.gravity * frames * frames) / frames
     };
   }
 

@@ -1,6 +1,5 @@
 (function (SaunaTim) {
   const { LAUNCH_POINTS, PHYSICS, VIEWPORT } = SaunaTim.config;
-  const { circle } = SaunaTim.render.primitives;
 
   function drawAimArc(ctx, state, shotFromDrag) {
     if (!state.dragging || !state.dragNow || state.turn !== 0) return;
@@ -12,10 +11,10 @@
     let vy = shot.vy;
 
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,.95)";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = "rgba(120, 220, 255, .9)";
+    ctx.lineWidth = 4;
     ctx.lineCap = "round";
-    ctx.setLineDash([1, 15]);
+    ctx.setLineDash([8, 14]);
     ctx.beginPath();
     ctx.moveTo(x, y);
 
@@ -29,9 +28,9 @@
 
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 4;
-    circle(ctx, x, y, 12, false, true);
+    ctx.strokeStyle = "rgba(255,255,255,.32)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
     ctx.restore();
   }
 

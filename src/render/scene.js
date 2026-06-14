@@ -7,6 +7,7 @@
   const { drawProjectile } = SaunaTim.render.projectile;
   const { drawProps } = SaunaTim.render.props;
   const { drawStove } = SaunaTim.render.stove;
+  const { drawThermometers } = SaunaTim.render.thermometers;
   const { drawAimArc } = SaunaTim.render.trajectory;
 
   function drawScene(ctx, background, state, shotFromDrag) {
@@ -20,8 +21,9 @@
     }
 
     drawBackgroundCleanup(ctx);
-    drawProps(ctx);
-    drawStove(ctx);
+    drawThermometers(ctx, state);
+    drawProps(ctx, state);
+    drawStove(ctx, state);
     drawSkinRedness(ctx, state.players);
     drawAimArc(ctx, state, shotFromDrag);
     drawProjectile(ctx, state.projectile);

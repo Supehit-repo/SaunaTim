@@ -5,10 +5,6 @@
     if (!projectile) return;
 
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,.65)";
-    projectile.trail.forEach((point, index) => {
-      circle(ctx, point.x, point.y, 3 + index * .08, true, false);
-    });
     ctx.fillStyle = "#69d4ff";
     ctx.strokeStyle = "#103849";
     ctx.lineWidth = 3;

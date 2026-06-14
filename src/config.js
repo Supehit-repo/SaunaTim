@@ -11,6 +11,10 @@
 
   const MAX_HP = 350;
   const WINS_TO_MATCH = 2;
+  const TEMPERATURE = {
+    base: 65,
+    max: 100
+  };
 
   const AIM = {
     x1: 525,
@@ -36,6 +40,7 @@
     LAUNCH_POINTS,
     MAX_HP,
     PHYSICS,
+    TEMPERATURE,
     WINS_TO_MATCH,
     VIEWPORT
   };

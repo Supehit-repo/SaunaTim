@@ -1,7 +1,7 @@
 (function (SaunaTim) {
   const { roundedRect } = SaunaTim.render.primitives;
 
-  function drawStove(ctx) {
+  function drawStove(ctx, state) {
     ctx.save();
 
     const x = 515;
@@ -35,13 +35,15 @@
     ctx.fillStyle = "#111";
     roundedRect(ctx, 565, 515, 150, 65, 8, true, false);
 
-    const fire = ctx.createRadialGradient(640, 552, 4, 640, 552, 58);
+    const fireBoost = state ? state.fireBoost / 160 : 0;
+    const fire = ctx.createRadialGradient(640, 552, 4, 640, 552, 58 + fireBoost * 22);
     fire.addColorStop(0, "#fff36c");
     fire.addColorStop(.42, "#ff8a20");
     fire.addColorStop(1, "#861711");
     ctx.fillStyle = fire;
     roundedRect(ctx, 582, 528, 116, 42, 5, true, false);
 
+    drawFlames(ctx, fireBoost);
     drawFirewood(ctx);
 
     ctx.strokeStyle = "rgba(0,0,0,.48)";
@@ -55,6 +57,41 @@
 
     drawStones(ctx);
     ctx.restore();
+  }
+
+  function drawFlames(ctx, fireBoost) {
+    const boost = Math.max(0, Math.min(1, fireBoost));
+    const flames = [
+      [606, 565, 22, 36, "#ffdd47"],
+      [633, 568, 28, 46, "#ff7725"],
+      [662, 565, 24, 40, "#ffec7a"],
+      [685, 566, 19, 34, "#ff5a1e"]
+    ];
+
+    flames.forEach((flame, index) => {
+      const flicker = Math.sin(Date.now() * .009 + index * 1.8) * 4;
+      const height = flame[3] + boost * 28 + flicker;
+      ctx.fillStyle = flame[4];
+      ctx.beginPath();
+      ctx.moveTo(flame[0], flame[1] - height);
+      ctx.bezierCurveTo(
+        flame[0] - flame[2],
+        flame[1] - height * .55,
+        flame[0] - flame[2] * .45,
+        flame[1] - height * .16,
+        flame[0],
+        flame[1]
+      );
+      ctx.bezierCurveTo(
+        flame[0] + flame[2] * .52,
+        flame[1] - height * .18,
+        flame[0] + flame[2],
+        flame[1] - height * .56,
+        flame[0],
+        flame[1] - height
+      );
+      ctx.fill();
+    });
   }
 
   function drawFirewood(ctx) {
