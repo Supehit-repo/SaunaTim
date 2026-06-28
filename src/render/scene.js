@@ -1,6 +1,5 @@
 (function (SaunaTim) {
   const { VIEWPORT } = SaunaTim.config;
-  const { drawBackgroundCleanup } = SaunaTim.render.backgroundCleanup;
   const { drawSkinRedness } = SaunaTim.render.characters;
   const { drawEffects } = SaunaTim.render.effects;
   const { drawHud } = SaunaTim.render.hud;
@@ -20,7 +19,6 @@
       ctx.fillRect(0, 0, VIEWPORT.width, VIEWPORT.height);
     }
 
-    drawBackgroundCleanup(ctx);
     drawThermometers(ctx, state);
     drawProps(ctx, state);
     drawStove(ctx, state);

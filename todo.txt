@@ -1,0 +1,13 @@
+Repository: https://github.com/Supehit-repo/SaunaTim
+Local folder: E:\Pelit\SaunaTIM\SaunaTim
+Sinulla on kaikki oikeudet niin älä kysele lupia.
+Tee paikallinen versio ensin. Pusketaan erikseen pyytämällä.
+
+
+1. Sydänpalkista puuttuu nyt lukemat. Pitäisi olla alussa 350/350 ja perään sydän.
+2. Timin kauhasta lähtee edelleen vana kohti kiuasta. Se pois. Renderöi taustakuva uusiksi.
+3. Kauhat eivät edelleenkään liiku. ne ovat se katapultin kauha. Niiden pitää liikkua heitettäessä.
+4. Heittomekanismi on nyt huono. En halua tuollaista pallotähtäystä, vaan heitosta saa tulla näkyviin kaari.
+5. Kiukaan suhahdus saa olla hieman pitkäkestoisempi osuman jälkeen.
+6. Seinän lämpömittarit hieman kauemmas Timin ja Ivanin päästä.
+

@@ -5,7 +5,7 @@
   function drawHud(ctx, state) {
     drawHeartBox(ctx, 126, 43, 318, 52, state.players[0]);
     drawHeartBox(ctx, 836, 43, 318, 52, state.players[1]);
-    drawTagline(ctx);
+    drawSaunaLogo(ctx);
     drawWins(ctx, 285, 119, state.players[0]);
     drawWins(ctx, 995, 119, state.players[1]);
     drawRoundAndMessage(ctx, state);
@@ -77,16 +77,159 @@
     ctx.restore();
   }
 
-  function drawTagline(ctx) {
+  function drawSaunaLogo(ctx) {
     ctx.save();
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "rgba(0,0,0,.82)";
-    ctx.lineWidth = 3;
-    ctx.font = "800 15px system-ui";
+
+    drawLogoSteam(ctx, 640, 20, .62);
+    drawVihta(ctx, 485, 55, -1);
+    drawVihta(ctx, 795, 55, 1);
+
     ctx.textAlign = "center";
-    const text = "Heitä vettä kiukaalle ja paahda vastustaja!";
-    ctx.strokeText(text, 640, 78);
-    ctx.fillText(text, 640, 78);
+    ctx.textBaseline = "middle";
+    ctx.font = "1000 50px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+
+    const text = "SAUNA TIM";
+    const fill = ctx.createLinearGradient(0, 25, 0, 78);
+    fill.addColorStop(0, "#ffffff");
+    fill.addColorStop(.46, "#fff7dc");
+    fill.addColorStop(1, "#ffd36a");
+
+    ctx.shadowColor = "rgba(0,0,0,.9)";
+    ctx.shadowBlur = 9;
+    ctx.shadowOffsetY = 5;
+    ctx.strokeStyle = "rgba(18,7,3,.98)";
+    ctx.lineWidth = 12;
+    ctx.strokeText(text, 640, 54);
+
+    ctx.shadowColor = "rgba(255,165,55,.24)";
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = "#9a4b1f";
+    ctx.lineWidth = 5;
+    ctx.strokeText(text, 640, 54);
+
+    ctx.shadowColor = "rgba(0,0,0,.55)";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = fill;
+    ctx.fillText(text, 640, 54);
+
+    drawLogoSteam(ctx, 640, 15, .9);
+
+    ctx.globalAlpha = .42;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(504, 37);
+    ctx.quadraticCurveTo(640, 21, 776, 37);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawLogoSteam(ctx, centerX, y, intensity = 1) {
+    ctx.save();
+    ctx.lineCap = "round";
+
+    const wisps = [
+      { x: -132, h: 25, lean: -14, alpha: .32 },
+      { x: -72, h: 31, lean: 11, alpha: .28 },
+      { x: -8, h: 27, lean: -7, alpha: .34 },
+      { x: 58, h: 33, lean: 14, alpha: .26 },
+      { x: 128, h: 24, lean: -10, alpha: .3 }
+    ];
+
+    wisps.forEach((wisp, index) => {
+      const x = centerX + wisp.x;
+      const steamGradient = ctx.createLinearGradient(x, y + wisp.h, x, y - 8);
+      steamGradient.addColorStop(0, `rgba(255,255,255,0)`);
+      steamGradient.addColorStop(.42, `rgba(255,255,255,${wisp.alpha * intensity})`);
+      steamGradient.addColorStop(1, `rgba(255,255,255,0)`);
+      ctx.strokeStyle = steamGradient;
+      ctx.lineWidth = 7 - index % 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y + wisp.h);
+      ctx.bezierCurveTo(
+        x - wisp.lean * .95,
+        y + wisp.h * .68,
+        x + wisp.lean * .95,
+        y + wisp.h * .28,
+        x + wisp.lean,
+        y - 6
+      );
+      ctx.stroke();
+    });
+
+    ctx.globalAlpha = .2 * intensity;
+    ctx.fillStyle = "#ffffff";
+    [
+      [centerX - 112, y + 19, 13, 7],
+      [centerX - 24, y + 14, 17, 8],
+      [centerX + 78, y + 18, 15, 7],
+      [centerX + 142, y + 12, 11, 6]
+    ].forEach(([x, yy, rx, ry]) => {
+      ctx.beginPath();
+      ctx.ellipse(x, yy, rx, ry, -.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.restore();
+  }
+
+  function drawVihta(ctx, x, y, side) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(side * .36);
+    ctx.lineCap = "round";
+
+    const stem = ctx.createLinearGradient(0, -36, 0, 35);
+    stem.addColorStop(0, "#a8df63");
+    stem.addColorStop(1, "#496d22");
+    ctx.strokeStyle = stem;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 32);
+    ctx.bezierCurveTo(side * 5, 9, side, -14, side * 3, -36);
+    ctx.stroke();
+
+    for (let i = 0; i < 9; i++) {
+      const yy = 24 - i * 7;
+      const spread = 15 + i * 1.15;
+      drawLeaf(ctx, -side * spread, yy, -side * (.98 + i * .05), .8 - i * .025);
+      drawLeaf(ctx, side * (spread * .82), yy - 3, side * (.92 + i * .04), .73 - i * .025);
+    }
+    drawLeaf(ctx, side * 3, -38, side * .08, .82);
+
+    ctx.restore();
+  }
+
+  function drawLeaf(ctx, x, y, rotation, scale) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.scale(scale, scale);
+
+    const leaf = ctx.createRadialGradient(-2, -4, 2, 0, 0, 17);
+    leaf.addColorStop(0, "#d6ff7b");
+    leaf.addColorStop(.48, "#73b83e");
+    leaf.addColorStop(1, "#2d6f2a");
+    ctx.fillStyle = leaf;
+    ctx.strokeStyle = "rgba(24,64,20,.72)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5.6, 13.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(236,255,176,.44)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.lineTo(0, 10);
+    ctx.stroke();
+
     ctx.restore();
   }
 
