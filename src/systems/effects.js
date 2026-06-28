@@ -1,5 +1,5 @@
 (function (SaunaTim) {
-  const { AIM } = SaunaTim.config;
+  const { AIM, MAX_HP } = SaunaTim.config;
   const { randomBetween } = SaunaTim.utils;
 
   function addFloatingText(state, text, x, y) {
@@ -63,12 +63,18 @@
   }
 
   function updateEffects(state) {
+    addPlayerHeatSteam(state);
+
     state.particles.forEach((particle) => {
       particle.x += particle.vx;
       particle.y += particle.vy;
       if (particle.kind === "confetti") {
         particle.vy += .075;
         particle.rotation += particle.spin;
+      } else if (particle.kind === "bodySteam") {
+        particle.vx += Math.sin((particle.life + particle.x) * .035) * .008;
+        particle.vy -= .006;
+        particle.r *= 1.006;
       } else if (particle.kind === "spark") {
         particle.vy += .018;
         particle.r *= .988;
@@ -85,6 +91,33 @@
       text.life--;
     });
     state.texts = state.texts.filter((text) => text.life > 0);
+  }
+
+  function addPlayerHeatSteam(state) {
+    const origins = [
+      { x: 142, y: 424, spreadX: 48, spreadY: 80 },
+      { x: 1100, y: 430, spreadX: 52, spreadY: 82 }
+    ];
+
+    state.players.forEach((player, index) => {
+      const heat = player.hp / MAX_HP;
+      if (heat < .18) return;
+
+      const chance = (heat - .18) * .18;
+      if (Math.random() >= chance) return;
+
+      const origin = origins[index];
+      state.particles.push({
+        x: origin.x + randomBetween(-origin.spreadX, origin.spreadX),
+        y: origin.y + randomBetween(-origin.spreadY * .35, origin.spreadY),
+        vx: randomBetween(-.28, .28),
+        vy: randomBetween(-1.35, -.48),
+        r: randomBetween(6, 15 + heat * 10),
+        life: randomBetween(78, 145),
+        max: 145,
+        kind: "bodySteam"
+      });
+    });
   }
 
   SaunaTim.systems = SaunaTim.systems || {};

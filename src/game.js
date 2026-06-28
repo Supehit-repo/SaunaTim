@@ -20,8 +20,13 @@
       this.progression = createProgressionTracker();
       this.audio = createGameAudio();
       this.npcTimer = null;
+      this.roundResultDialog = document.getElementById("roundResultDialog");
+      this.roundResultTitle = document.getElementById("roundResultTitle");
+      this.roundResultText = document.getElementById("roundResultText");
+      this.roundResultOk = document.getElementById("roundResultOk");
 
       wireInput(this);
+      this.wireRoundResultDialog();
     }
 
     start() {
@@ -32,11 +37,20 @@
       this.audio.ensureStarted();
     }
 
+    wireRoundResultDialog() {
+      if (!this.roundResultOk) return;
+      this.roundResultOk.addEventListener("click", () => {
+        this.startAudio();
+        this.confirmRoundResult();
+      });
+    }
+
     reset() {
       if (this.npcTimer) {
         window.clearTimeout(this.npcTimer);
         this.npcTimer = null;
       }
+      this.hideRoundResultDialog();
       resetGameState(this.state);
     }
 
@@ -63,7 +77,7 @@
     }
 
     launchPlayerShot() {
-      if (!this.state.dragging || this.state.turn !== 0 || this.state.projectile || this.state.gameOver) return;
+      if (!this.state.dragging || this.state.turn !== 0 || this.state.projectile || this.state.gameOver || this.state.roundResultPending) return;
 
       const shot = this.shotFromDrag();
       this.cancelDrag();
@@ -85,13 +99,13 @@
     }
 
     scheduleNpcThrow() {
-      if (this.state.projectile || this.state.gameOver || this.state.turn !== 1 || this.state.aiThinking) return;
+      if (this.state.projectile || this.state.gameOver || this.state.roundResultPending || this.state.turn !== 1 || this.state.aiThinking) return;
 
       this.state.aiThinking = true;
 
       this.npcTimer = window.setTimeout(() => {
         this.npcTimer = null;
-        if (this.state.gameOver || this.state.turn !== 1 || this.state.projectile) {
+        if (this.state.gameOver || this.state.roundResultPending || this.state.turn !== 1 || this.state.projectile) {
           this.state.aiThinking = false;
           return;
         }
@@ -157,12 +171,43 @@
       addConfetti(this.state, winnerIndex);
       this.audio.playFanfare();
 
-      if (winner.wins >= WINS_TO_MATCH) {
+      this.state.roundResultPending = true;
+      this.state.roundResultWinner = winnerIndex;
+      this.state.roundResultEndsMatch = winner.wins >= WINS_TO_MATCH;
+      this.showRoundResultDialog(winnerIndex, this.state.roundResultEndsMatch);
+    }
+
+    showRoundResultDialog(winnerIndex, endsMatch) {
+      if (!this.roundResultDialog) return;
+
+      const playerWon = winnerIndex === 0;
+      this.roundResultTitle.textContent = playerWon ? "Sinä voitit kierroksen!" : "Ivan voitti kierroksen!";
+      this.roundResultText.textContent = endsMatch
+        ? "Paina OK nähdäksesi ottelun tuloksen."
+        : "Paina OK aloittaaksesi seuraavan kierroksen.";
+      this.roundResultDialog.hidden = false;
+      window.setTimeout(() => this.roundResultOk?.focus(), 0);
+    }
+
+    hideRoundResultDialog() {
+      if (this.roundResultDialog) this.roundResultDialog.hidden = true;
+    }
+
+    confirmRoundResult() {
+      if (!this.state.roundResultPending) return;
+
+      const endsMatch = this.state.roundResultEndsMatch;
+      this.state.roundResultPending = false;
+      this.state.roundResultWinner = null;
+      this.state.roundResultEndsMatch = false;
+      this.hideRoundResultDialog();
+
+      if (endsMatch) {
         this.state.gameOver = true;
         return;
       }
 
-      window.setTimeout(() => this.startNextRound(), 1400);
+      this.startNextRound();
     }
 
     startNextRound() {
@@ -181,6 +226,9 @@
       this.state.dragNow = null;
       this.state.aimFrames = 0;
       this.state.aiThinking = false;
+      this.state.roundResultPending = false;
+      this.state.roundResultWinner = null;
+      this.state.roundResultEndsMatch = false;
       this.state.scoreFlash = 0;
       this.state.fireBoost = 0;
       this.state.ladleSwing = [0, 0];
@@ -196,7 +244,7 @@
 
     scheduleTurnMessage() {
       window.setTimeout(() => {
-        if (this.state.gameOver) return;
+        if (this.state.gameOver || this.state.roundResultPending) return;
         this.state.msg = this.state.turn === 0 ? "Sinun vuorosi" : "";
         if (this.state.turn === 1) this.scheduleNpcThrow();
       }, 850);

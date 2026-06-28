@@ -7,6 +7,7 @@
     let master = null;
     let crackleTimer = null;
     let started = false;
+    let unlocked = false;
 
     function ensureStarted() {
       if (!ctx) {
@@ -16,11 +17,29 @@
         master.connect(ctx.destination);
       }
 
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended") {
+        const resume = ctx.resume();
+        if (resume && typeof resume.catch === "function") resume.catch(() => {});
+      }
+      unlockMobileAudio();
       if (!started) {
         started = true;
         startFireCrackle();
       }
+    }
+
+    function unlockMobileAudio() {
+      if (unlocked || !ctx || !master) return;
+      unlocked = true;
+
+      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(master);
+      source.start(0);
     }
 
     function startFireCrackle() {
@@ -110,6 +129,7 @@
 
     return {
       ensureStarted,
+      getState() { return ctx ? ctx.state : "idle"; },
       playFanfare,
       playHiss,
       playIvanGrunt
@@ -119,6 +139,7 @@
   function createSilentAudio() {
     return {
       ensureStarted() {},
+      getState() { return "unsupported"; },
       playFanfare() {},
       playHiss() {},
       playIvanGrunt() {}

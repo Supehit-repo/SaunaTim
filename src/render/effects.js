@@ -14,6 +14,11 @@
         ctx.beginPath();
         ctx.ellipse(particle.x, particle.y, particle.r * .7, particle.r * 1.7, 0, 0, Math.PI * 2);
         ctx.fill();
+      } else if (particle.kind === "bodySteam") {
+        ctx.fillStyle = "#f6fbff";
+        ctx.beginPath();
+        ctx.ellipse(particle.x, particle.y, particle.r * 1.2, particle.r * 1.9, 0, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         ctx.fillStyle = "#eef4f7";
         ctx.beginPath();

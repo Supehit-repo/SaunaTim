@@ -4,9 +4,16 @@
 
   function wireInput(game) {
     const canvas = game.canvas;
+    const unlockAudio = () => game.startAudio();
+
+    window.addEventListener("pointerdown", unlockAudio, { passive: true, capture: true });
+    window.addEventListener("touchstart", unlockAudio, { passive: true, capture: true });
+    window.addEventListener("click", unlockAudio, { passive: true, capture: true });
 
     canvas.addEventListener("pointerdown", (event) => {
       game.startAudio();
+
+      if (game.state.roundResultPending) return;
 
       if (game.state.gameOver) {
         game.reset();
@@ -41,6 +48,10 @@
 
     window.addEventListener("keydown", (event) => {
       if (event.code === "Space") game.startAudio();
+      if ((event.code === "Enter" || event.code === "Space") && game.state.roundResultPending) {
+        game.confirmRoundResult();
+        return;
+      }
       if (event.code === "Space" && game.state.gameOver) game.reset();
     });
   }

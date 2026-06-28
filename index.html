@@ -10,6 +10,23 @@
   <main id="wrap">
     <canvas id="game" width="1280" height="720" aria-label="Sauna Tim"></canvas>
     <div id="orientationHint" aria-hidden="true">Käännä laite vaaka-asentoon</div>
+
+    <section id="instructionsPanel" class="ui-panel" aria-labelledby="instructionsTitle">
+      <button id="instructionsClose" class="icon-button" type="button" aria-label="Sulje ohjeet">×</button>
+      <h1 id="instructionsTitle">Ohjeet</h1>
+      <p>Vedä Timin kauhaa taaksepäin, tähtää kaarella kiukaalle ja päästä irti.</p>
+      <p>Tarkempi osuma kuumentaa vastustajaa enemmän. Kun sydänpalkki tyhjenee, kierros ratkeaa.</p>
+    </section>
+
+    <button id="instructionsToggle" class="info-button" type="button" aria-label="Näytä ohjeet" hidden>i</button>
+
+    <div id="roundResultDialog" class="round-result" role="dialog" aria-modal="true" aria-labelledby="roundResultTitle" hidden>
+      <div class="round-result-card">
+        <h1 id="roundResultTitle">Sinä voitit kierroksen!</h1>
+        <p id="roundResultText">Paina OK jatkaaksesi.</p>
+        <button id="roundResultOk" type="button">OK</button>
+      </div>
+    </div>
   </main>
   <script src="./src/config.js"></script>
   <script src="./src/utils.js"></script>
