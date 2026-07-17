@@ -26,8 +26,8 @@
   };
 
   const LAUNCH_POINTS = {
-    player: { x: 276, y: 430 },
-    npc: { x: 1004, y: 430 }
+    player: { x: 258, y: 438 },
+    npc: { x: 972, y: 438 }
   };
 
   const ASSETS = {
