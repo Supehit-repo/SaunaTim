@@ -1,8 +1,9 @@
 (function (SaunaTim) {
   const { VIEWPORT } = SaunaTim.config;
-  const { drawSkinRedness } = SaunaTim.render.characters;
+  const { drawCharacterOverlays, drawSkinRedness } = SaunaTim.render.characters;
   const { drawEffects } = SaunaTim.render.effects;
   const { drawHud } = SaunaTim.render.hud;
+  const { drawNallemehu } = SaunaTim.render.nallemehu;
   const { drawProjectile } = SaunaTim.render.projectile;
   const { drawProps } = SaunaTim.render.props;
   const { drawStove } = SaunaTim.render.stove;
@@ -23,10 +24,12 @@
     drawProps(ctx, state);
     drawStove(ctx, state);
     drawSkinRedness(ctx, state.players);
+    drawCharacterOverlays(ctx, state);
     drawAimArc(ctx, state, shotFromDrag);
     drawProjectile(ctx, state.projectile);
     drawEffects(ctx, state);
     drawHud(ctx, state);
+    drawNallemehu(ctx, state);
   }
 
   SaunaTim.render.scene = {

@@ -30,8 +30,29 @@
     npc: { x: 972, y: 438 }
   };
 
+  const NALLEMEHU = {
+    bottle: {
+      x: 640,
+      anchorX: 640,
+      anchorY: 118,
+      startY: 152,
+      targetY: 284,
+      rotation: -0.28,
+      scale: 0.52,
+      dropFrames: 76
+    },
+    popup: {
+      x: 314,
+      y: 168,
+      width: 652,
+      height: 292
+    },
+    adDuration: 210
+  };
+
   const ASSETS = {
-    background: "./assets/sauna-background.png"
+    background: "./assets/sauna-background.png",
+    vladimirFace: "./src/images/VP.jpg"
   };
 
   SaunaTim.config = {
@@ -39,6 +60,7 @@
     ASSETS,
     LAUNCH_POINTS,
     MAX_HP,
+    NALLEMEHU,
     PHYSICS,
     TEMPERATURE,
     WINS_TO_MATCH,

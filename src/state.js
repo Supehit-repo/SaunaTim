@@ -1,4 +1,19 @@
 (function (SaunaTim) {
+  function createNallemehuState() {
+    return {
+      phase: "hidden",
+      x: 640,
+      y: -130,
+      age: 0,
+      popupOpen: false,
+      popupSeen: false,
+      shotOwner: null,
+      pendingTurn: null,
+      adTimer: 0,
+      hit: false
+    };
+  }
+
   function createGameState() {
     return {
       players: [
@@ -7,6 +22,7 @@
       ],
       turn: 0,
       round: 1,
+      roundThrows: 0,
       projectile: null,
       dragging: false,
       dragNow: null,
@@ -23,6 +39,8 @@
       scoreFlash: 0,
       fireBoost: 0,
       ladleSwing: [0, 0],
+      opponentVariant: "ivan",
+      nallemehu: createNallemehuState(),
       particles: [],
       texts: []
     };
@@ -33,6 +51,7 @@
   }
 
   SaunaTim.state = {
+    createNallemehuState,
     createGameState,
     resetGameState
   };

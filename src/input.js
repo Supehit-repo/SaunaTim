@@ -13,6 +13,9 @@
     canvas.addEventListener("pointerdown", (event) => {
       game.startAudio();
 
+      const pointer = getCanvasPoint(canvas, event);
+      if (game.handleCanvasClick?.(pointer)) return;
+
       if (game.state.roundResultPending) return;
 
       if (game.state.gameOver) {
@@ -22,7 +25,6 @@
 
       if (game.state.turn !== 0 || game.state.projectile || game.state.aiThinking) return;
 
-      const pointer = getCanvasPoint(canvas, event);
       if (distance(pointer.x, pointer.y, LAUNCH_POINTS.player.x, LAUNCH_POINTS.player.y) < 190) {
         game.state.dragging = true;
         game.state.dragNow = pointer;
