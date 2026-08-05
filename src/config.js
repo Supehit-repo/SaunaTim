@@ -26,8 +26,8 @@
   };
 
   const LAUNCH_POINTS = {
-    player: { x: 258, y: 438 },
-    npc: { x: 972, y: 438 }
+    player: { x: 360, y: 456 },
+    npc: { x: 920, y: 456 }
   };
 
   const NALLEMEHU = {
@@ -51,7 +51,19 @@
   };
 
   const ASSETS = {
-    background: "./assets/sauna-background.png",
+    background: "./src/images/defaultbackground.png?v=clean-background-20260805",
+    loylySound: "./assets/audio/loyly-reference.mp3",
+    playerCharacters: {
+      default: "./src/Characters/Player1.png?v=player1-normalized-20260805"
+    },
+    opponentCharacters: {
+      default: "./src/Characters/DefaultOpponent.png?v=balanced-launch-20260805",
+      vladimir: "./src/Characters/VladimirOpponent.png?v=balanced-launch-20260805"
+    },
+    saunaLogo: "./src/images/SaunaTimLogo.png",
+    sponsors: {
+      kylasauna: "./src/Sponsors/Kylasauna.jpg?v=sponsor-fabric-20260805"
+    },
     vladimirFace: "./src/images/VP.jpg"
   };
 

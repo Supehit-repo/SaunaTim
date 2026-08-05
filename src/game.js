@@ -59,6 +59,15 @@
       this.state.dragNow = null;
     }
 
+    setOpponentIdentity(name, variant) {
+      this.state.players[1].name = name;
+      this.state.opponentVariant = variant;
+    }
+
+    getOpponentName() {
+      return this.state.players[1].name || "IVAN";
+    }
+
     handleCanvasClick(point) {
       return this.handleNallemehuClick(point);
     }
@@ -187,7 +196,8 @@
 
     armNallemehuShot(owner) {
       const event = this.state.nallemehu;
-      if (!event || event.phase !== "armed" || event.pendingTurn !== owner) return;
+      // Nallemehu is a player-only bonus event; Ivan must never arm it.
+      if (owner !== 0 || !event || event.phase !== "armed" || event.pendingTurn !== owner) return;
 
       event.shotOwner = owner;
       this.state.msg = "Osu pulloon!";
@@ -262,6 +272,9 @@
 
     projectileHitsNallemehu(previousX, previousY, projectile) {
       const event = this.state.nallemehu;
+      // Ivan's projectile passes through the bottle so it cannot interrupt his
+      // turn or leave the game waiting for the player to dismiss a popup.
+      if (projectile.owner !== 0) return false;
       if (!event || event.popupOpen) return false;
       if (event.phase !== "dropping" && event.phase !== "available" && event.phase !== "armed") return false;
 
@@ -279,7 +292,7 @@
 
     handleNallemehuProjectileHit(owner) {
       const event = this.state.nallemehu;
-      if (!event) return;
+      if (owner !== 0 || !event) return;
 
       if (event.phase === "armed" && event.shotOwner === owner) {
         this.triggerNallemehuAd(owner);
@@ -315,7 +328,7 @@
       event.shotOwner = null;
       event.pendingTurn = null;
 
-      this.state.opponentVariant = "vladimir";
+      this.setOpponentIdentity("VLADIMIR", "vladimir");
       this.state.msg = "Ivan muuttui Vladimiriksi!";
       this.state.lastScoreText = "Nallemehu: Vladimir!";
       this.state.scoreFlash = 120;
@@ -394,7 +407,7 @@
         this.state.projectile = createNpcThrow();
         this.state.projectile.owner = 1;
         this.armNallemehuShot(1);
-        this.state.msg = "Ivan heittää";
+        this.state.msg = `${this.getOpponentName()} heittää`;
         this.state.ladleSwing[1] = SaunaTim.render.props.SWING_DURATION;
         this.state.aiThinking = false;
       }, 700);
@@ -452,7 +465,7 @@
     finishRound(winnerIndex) {
       const winner = this.state.players[winnerIndex];
       winner.wins++;
-      this.state.msg = winnerIndex === 0 ? "Sinä voitit kierroksen!" : "Ivan voitti kierroksen!";
+      this.state.msg = winnerIndex === 0 ? "Sinä voitit kierroksen!" : `${this.getOpponentName()} voitti kierroksen!`;
       this.state.lastScoreText = this.state.msg;
       addConfetti(this.state, winnerIndex);
       this.audio.playFanfare();
@@ -467,7 +480,7 @@
       if (!this.roundResultDialog) return;
 
       const playerWon = winnerIndex === 0;
-      this.roundResultTitle.textContent = playerWon ? "Sinä voitit kierroksen!" : "Ivan voitti kierroksen!";
+      this.roundResultTitle.textContent = playerWon ? "Sinä voitit kierroksen!" : `${this.getOpponentName()} voitti kierroksen!`;
       this.roundResultText.textContent = endsMatch
         ? "Paina OK nähdäksesi ottelun tuloksen."
         : "Paina OK aloittaaksesi seuraavan kierroksen.";
@@ -487,7 +500,7 @@
       this.state.roundResultWinner = null;
       this.state.roundResultEndsMatch = false;
       this.hideRoundResultDialog();
-      this.state.opponentVariant = "ivan";
+      this.setOpponentIdentity("IVAN", "ivan");
 
       if (endsMatch) {
         this.state.gameOver = true;
@@ -520,14 +533,14 @@
       this.state.scoreFlash = 0;
       this.state.fireBoost = 0;
       this.state.ladleSwing = [0, 0];
-      this.state.opponentVariant = "ivan";
+      this.setOpponentIdentity("IVAN", "ivan");
       this.state.nallemehu = createNallemehuState();
       this.state.particles = [];
       this.state.texts = [];
       this.state.players.forEach((player, index) => {
         player.wins = wins[index];
       });
-      this.state.msg = this.state.turn === 0 ? "Sinun vuorosi" : "Ivan aloittaa";
+      this.state.msg = this.state.turn === 0 ? "Sinun vuorosi" : `${this.getOpponentName()} aloittaa`;
 
       if (this.state.turn === 1) this.scheduleNpcThrow();
     }

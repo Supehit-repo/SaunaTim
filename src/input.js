@@ -6,8 +6,10 @@
     const canvas = game.canvas;
     const unlockAudio = () => game.startAudio();
 
+    // iOS Safari must see AudioContext.resume inside the same touch gesture.
     window.addEventListener("pointerdown", unlockAudio, { passive: true, capture: true });
     window.addEventListener("touchstart", unlockAudio, { passive: true, capture: true });
+    window.addEventListener("touchend", unlockAudio, { passive: true, capture: true });
     window.addEventListener("click", unlockAudio, { passive: true, capture: true });
 
     canvas.addEventListener("pointerdown", (event) => {

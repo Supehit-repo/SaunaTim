@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Sauna Tim</title>
-  <link rel="stylesheet" href="./src/styles.css">
+  <link rel="stylesheet" href="./src/styles.css?v=layout-tune2-20260805">
 </head>
 <body>
   <main id="wrap">
@@ -20,6 +20,36 @@
 
     <button id="instructionsToggle" class="info-button" type="button" aria-label="Näytä ohjeet" hidden>i</button>
 
+    <div class="game-menu" id="gameMenu">
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Avaa valikko" aria-expanded="false" aria-controls="menuPanel">
+        <span></span><span></span><span></span>
+      </button>
+      <section id="menuPanel" class="menu-panel" aria-label="Pelivalikko" hidden>
+        <div id="menuHome">
+          <button class="menu-item" id="settingsOpen" type="button">Asetukset <span aria-hidden="true">›</span></button>
+          <button class="menu-item" data-legal="privacy" type="button">Tietosuojaseloste</button>
+          <button class="menu-item" data-legal="terms" type="button">Käyttöehdot</button>
+          <p class="menu-version">Versio 0.1.0</p>
+        </div>
+        <div id="settingsPanel" hidden>
+          <button id="settingsBack" class="menu-back" type="button">‹ Takaisin</button>
+          <h2>Asetukset</h2>
+          <label class="sound-setting" for="soundsEnabled">
+            <span>Äänet</span>
+            <input id="soundsEnabled" type="checkbox" role="switch" checked>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div id="legalDialog" class="legal-dialog" role="dialog" aria-modal="true" aria-labelledby="legalTitle" hidden>
+      <section class="legal-card">
+        <button id="legalClose" class="icon-button" type="button" aria-label="Sulje">×</button>
+        <h1 id="legalTitle"></h1>
+        <div id="legalContent"></div>
+      </section>
+    </div>
+
     <div id="roundResultDialog" class="round-result" role="dialog" aria-modal="true" aria-labelledby="roundResultTitle" hidden>
       <div class="round-result-card">
         <h1 id="roundResultTitle">Sinä voitit kierroksen!</h1>
@@ -28,28 +58,29 @@
       </div>
     </div>
   </main>
-  <script src="./src/config.js?v=nallemehu-20260717-1221"></script>
+  <script src="./src/config.js?v=sponsor-fabric-20260805"></script>
   <script src="./src/utils.js"></script>
-  <script src="./src/assets.js?v=nallemehu-20260717-1221"></script>
+  <script src="./src/assets.js?v=perf-cleanup-20260805"></script>
   <script src="./src/state.js?v=nallemehu-20260717-1221"></script>
   <script src="./src/systems/scoring.js"></script>
   <script src="./src/systems/effects.js"></script>
   <script src="./src/systems/npc.js"></script>
   <script src="./src/systems/progression.js"></script>
-  <script src="./src/systems/audio.js"></script>
+  <script src="./src/systems/audio.js?v=perf-cleanup-20260805"></script>
   <script src="./src/render/primitives.js"></script>
+  <script src="./src/render/sponsors.js?v=sponsor-fabric-20260805"></script>
   <script src="./src/render/stove.js"></script>
-  <script src="./src/render/characters.js?v=nallemehu-20260717-1221"></script>
+  <script src="./src/render/characters.js?v=player1-normalized-20260805"></script>
   <script src="./src/render/thermometers.js"></script>
-  <script src="./src/render/hud.js"></script>
-  <script src="./src/render/nallemehu.js?v=nallemehu-20260717-1221"></script>
+  <script src="./src/render/hud.js?v=layout-tune2-20260805"></script>
+  <script src="./src/render/nallemehu.js?v=ad-copy-20260805"></script>
   <script src="./src/render/trajectory.js"></script>
   <script src="./src/render/projectile.js"></script>
   <script src="./src/render/effects.js"></script>
-  <script src="./src/render/props.js"></script>
-  <script src="./src/render/scene.js?v=nallemehu-20260717-1221"></script>
+  <script src="./src/render/props.js?v=clean-bg-bench-scale2-20260805"></script>
+  <script src="./src/render/scene.js?v=sponsor-fabric-20260805"></script>
   <script src="./src/input.js?v=nallemehu-20260717-1221"></script>
-  <script src="./src/game.js?v=nallemehu-20260717-1221"></script>
-  <script src="./src/main.js"></script>
+  <script src="./src/game.js?v=vladimir-name-20260805"></script>
+  <script src="./src/main.js?v=layout-tune2-20260805"></script>
 </body>
 </html>

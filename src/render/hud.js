@@ -1,6 +1,14 @@
 (function (SaunaTim) {
-  const { MAX_HP, VIEWPORT, WINS_TO_MATCH } = SaunaTim.config;
+  const { ASSETS, MAX_HP, VIEWPORT, WINS_TO_MATCH } = SaunaTim.config;
+  const { loadImage } = SaunaTim.assets;
   const { roundedRect } = SaunaTim.render.primitives;
+  const saunaLogoImage = ASSETS.saunaLogo ? loadImage(ASSETS.saunaLogo) : null;
+  const SAUNA_LOGO_CROP = {
+    sx: 58,
+    sy: 70,
+    sw: 405,
+    sh: 182
+  };
 
   function drawHud(ctx, state) {
     drawHeartBox(ctx, 126, 43, 318, 52, state.players[0]);
@@ -78,6 +86,11 @@
   }
 
   function drawSaunaLogo(ctx) {
+    if (saunaLogoImage && saunaLogoImage.complete && saunaLogoImage.naturalWidth > 0) {
+      drawSaunaLogoImage(ctx);
+      return;
+    }
+
     ctx.save();
 
     drawLogoSteam(ctx, 640, 20, .62);
@@ -126,6 +139,28 @@
     ctx.quadraticCurveTo(640, 21, 776, 37);
     ctx.stroke();
 
+    ctx.restore();
+  }
+
+  function drawSaunaLogoImage(ctx) {
+    const width = 348;
+    const height = width * SAUNA_LOGO_CROP.sh / SAUNA_LOGO_CROP.sw;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.62)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 5;
+    ctx.drawImage(
+      saunaLogoImage,
+      SAUNA_LOGO_CROP.sx,
+      SAUNA_LOGO_CROP.sy,
+      SAUNA_LOGO_CROP.sw,
+      SAUNA_LOGO_CROP.sh,
+      640 - width / 2,
+      4,
+      width,
+      height
+    );
     ctx.restore();
   }
 
@@ -293,7 +328,7 @@
     ctx.textAlign = "center";
     ctx.font = "900 64px system-ui";
 
-    const winner = state.players[0].wins >= WINS_TO_MATCH ? "SINÄ voitit!" : "IVAN voitti!";
+    const winner = state.players[0].wins >= WINS_TO_MATCH ? "SINÄ voitit!" : `${state.players[1].name} voitti!`;
     ctx.strokeText(winner, VIEWPORT.width / 2, VIEWPORT.height / 2 - 10);
     ctx.fillText(winner, VIEWPORT.width / 2, VIEWPORT.height / 2 - 10);
 

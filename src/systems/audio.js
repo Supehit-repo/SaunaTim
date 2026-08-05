@@ -1,4 +1,6 @@
 (function (SaunaTim) {
+  const { ASSETS } = SaunaTim.config;
+
   function createGameAudio() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return createSilentAudio();
@@ -7,30 +9,89 @@
     let master = null;
     let crackleTimer = null;
     let started = false;
-    let unlocked = false;
+    let startPromise = null;
+    let enabled = true;
+    let loylyBuffer = null;
+    let loylyLoadPromise = null;
 
     function ensureStarted() {
       if (!ctx) {
         ctx = new AudioContext();
         master = ctx.createGain();
-        master.gain.value = .22;
+        master.gain.value = enabled ? .22 : 0;
         master.connect(ctx.destination);
       }
 
-      if (ctx.state === "suspended") {
-        const resume = ctx.resume();
-        if (resume && typeof resume.catch === "function") resume.catch(() => {});
+      // Safari only allows Web Audio to start from a real user gesture. Prime
+      // it synchronously here, then wait for resume before scheduling sounds.
+      primeMobileAudio();
+      if (ctx.state === "running") {
+        finishStarting();
+        return Promise.resolve();
       }
-      unlockMobileAudio();
-      if (!started) {
-        started = true;
-        startFireCrackle();
-      }
+
+      if (startPromise) return startPromise;
+      const resume = ctx.resume();
+      if (!resume || typeof resume.then !== "function") return Promise.resolve();
+
+      startPromise = resume
+        .then(() => {
+          if (ctx && ctx.state === "running") finishStarting();
+        })
+        .catch(() => {})
+        .finally(() => { startPromise = null; });
+      return startPromise;
     }
 
-    function unlockMobileAudio() {
-      if (unlocked || !ctx || !master) return;
-      unlocked = true;
+    function finishStarting() {
+      if (started) return;
+      started = true;
+      loadLoylySample();
+      startFireCrackle();
+    }
+
+    function disconnectNodes(...nodes) {
+      nodes.forEach((node) => {
+        try {
+          node.disconnect();
+        } catch (error) {
+          // Already disconnected; Web Audio throws on some browsers.
+        }
+      });
+    }
+
+    function scheduleDisconnect(when, ...nodes) {
+      if (!ctx) return;
+      const delayMs = Math.max(0, (when - ctx.currentTime + .08) * 1000);
+      window.setTimeout(() => disconnectNodes(...nodes), delayMs);
+    }
+
+    function loadLoylySample() {
+      if (!ctx || !ASSETS.loylySound) return Promise.resolve(null);
+      if (typeof fetch !== "function") return Promise.resolve(null);
+      if (loylyBuffer) return Promise.resolve(loylyBuffer);
+      if (loylyLoadPromise) return loylyLoadPromise;
+
+      loylyLoadPromise = fetch(ASSETS.loylySound)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Löyly audio ${response.status}`);
+          return response.arrayBuffer();
+        })
+        .then((arrayBuffer) => ctx.decodeAudioData(arrayBuffer))
+        .then((audioBuffer) => {
+          loylyBuffer = audioBuffer;
+          return loylyBuffer;
+        })
+        .catch(() => null)
+        .finally(() => {
+          loylyLoadPromise = null;
+        });
+
+      return loylyLoadPromise;
+    }
+
+    function primeMobileAudio() {
+      if (!ctx || !master) return;
 
       const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
       const source = ctx.createBufferSource();
@@ -39,7 +100,9 @@
       source.buffer = buffer;
       source.connect(gain);
       gain.connect(master);
-      source.start(0);
+      source.start(ctx.currentTime);
+      source.stop(ctx.currentTime + .01);
+      scheduleDisconnect(ctx.currentTime + .03, source, gain);
     }
 
     function startFireCrackle() {
@@ -52,6 +115,7 @@
     }
 
     function playNoiseBurst(volume, duration, lowpass, highpass) {
+      if (!ctx || !master || ctx.state !== "running") return;
       const sampleRate = ctx.sampleRate;
       const length = Math.max(1, Math.floor(sampleRate * duration));
       const buffer = ctx.createBuffer(1, length, sampleRate);
@@ -76,14 +140,59 @@
       high.connect(low);
       low.connect(gain);
       gain.connect(master);
-      source.start();
+      const now = ctx.currentTime;
+      source.start(now);
+      source.stop(now + duration + .02);
+      scheduleDisconnect(now + duration + .04, source, high, low, gain);
     }
 
     function playHiss(score) {
       if (!started || !ctx || ctx.state !== "running") return;
-      const volume = Math.min(.24, .075 + score / 650);
-      const duration = Math.min(1.1, .42 + score / 260);
-      playNoiseBurst(volume, duration, 4200, 900);
+      if (playLoylySample(score)) return;
+
+      loadLoylySample();
+      const volume = Math.min(.15, .04 + score / 1200);
+      const duration = Math.min(1.35, .55 + score / 320);
+      playSoftNoiseBurst(volume, duration, 2700, 320);
+    }
+
+    function playLoylySample(score) {
+      if (!loylyBuffer || !ctx || !master || ctx.state !== "running") return false;
+
+      const now = ctx.currentTime;
+      const duration = Math.min(2.05, .95 + score / 190);
+      const startOffset = loylyBuffer.duration > duration + .16 ? .08 : 0;
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      const low = ctx.createBiquadFilter();
+      const high = ctx.createBiquadFilter();
+      const volume = Math.min(.18, .07 + score / 950);
+
+      source.buffer = loylyBuffer;
+      source.playbackRate.setValueAtTime(.96 + Math.random() * .08, now);
+
+      high.type = "highpass";
+      high.frequency.value = 95;
+      high.Q.value = .25;
+
+      low.type = "lowpass";
+      low.frequency.setValueAtTime(4700, now);
+      low.frequency.exponentialRampToValueAtTime(2600, now + duration);
+      low.Q.value = .35;
+
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.linearRampToValueAtTime(volume, now + .04);
+      gain.gain.setValueAtTime(volume * .92, now + Math.min(.3, duration * .36));
+      gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+
+      source.connect(high);
+      high.connect(low);
+      low.connect(gain);
+      gain.connect(master);
+      source.start(now, startOffset, duration);
+      source.stop(now + duration + .04);
+      scheduleDisconnect(now + duration + .08, source, high, low, gain);
+      return true;
     }
 
     function playIvanGrunt() {
@@ -106,30 +215,151 @@
       gain.connect(master);
       osc.start(now);
       osc.stop(now + .28);
+      scheduleDisconnect(now + .34, osc, filter, gain);
     }
 
     function playFanfare() {
       if (!started || !ctx || ctx.state !== "running") return;
 
-      [523.25, 659.25, 783.99].forEach((frequency, index) => {
-        const now = ctx.currentTime + index * .08;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "triangle";
-        osc.frequency.value = frequency;
-        gain.gain.setValueAtTime(.0001, now);
-        gain.gain.exponentialRampToValueAtTime(.08, now + .015);
-        gain.gain.exponentialRampToValueAtTime(.0001, now + .22);
-        osc.connect(gain);
-        gain.connect(master);
-        osc.start(now);
-        osc.stop(now + .24);
+      const now = ctx.currentTime + .02;
+      const phrase = [
+        { frequency: 392.00, at: 0, duration: .2, volume: .05 },
+        { frequency: 523.25, at: .16, duration: .22, volume: .062 },
+        { frequency: 659.25, at: .32, duration: .24, volume: .066 },
+        { frequency: 783.99, at: .52, duration: .38, volume: .074 }
+      ];
+      const finalChord = [523.25, 659.25, 783.99, 1046.50];
+
+      phrase.forEach((note) => {
+        playBrassTone(note.frequency, now + note.at, note.duration, note.volume);
+        playBrassTone(note.frequency / 2, now + note.at, note.duration * 1.08, note.volume * .34);
       });
+
+      finalChord.forEach((frequency, index) => {
+        playBrassTone(frequency, now + .82, .58, .043 - index * .004);
+      });
+
+      playFanfareTail(now + .78);
+    }
+
+    function playSoftNoiseBurst(volume, duration, lowpass, highpass) {
+      if (!ctx || !master || ctx.state !== "running") return;
+
+      const sampleRate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      let smoothed = 0;
+
+      for (let i = 0; i < length; i++) {
+        smoothed = smoothed * .84 + (Math.random() * 2 - 1) * .16;
+        const fadeOut = 1 - i / length;
+        data[i] = smoothed * Math.pow(fadeOut, .72);
+      }
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      const low = ctx.createBiquadFilter();
+      const high = ctx.createBiquadFilter();
+      const now = ctx.currentTime;
+
+      low.type = "lowpass";
+      low.frequency.setValueAtTime(lowpass, now);
+      low.frequency.exponentialRampToValueAtTime(Math.max(1200, lowpass * .58), now + duration);
+      low.Q.value = .45;
+
+      high.type = "highpass";
+      high.frequency.value = highpass;
+      high.Q.value = .35;
+
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.linearRampToValueAtTime(volume, now + .075);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+
+      source.buffer = buffer;
+      source.connect(high);
+      high.connect(low);
+      low.connect(gain);
+      gain.connect(master);
+      source.start(now);
+      source.stop(now + duration + .03);
+      scheduleDisconnect(now + duration + .08, source, high, low, gain);
+    }
+
+    function playBrassTone(frequency, start, duration, volume) {
+      const osc = ctx.createOscillator();
+      const detuned = ctx.createOscillator();
+      const toneGain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = "sawtooth";
+      detuned.type = "triangle";
+      osc.frequency.setValueAtTime(frequency, start);
+      detuned.frequency.setValueAtTime(frequency * 1.006, start);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(720, start);
+      filter.frequency.exponentialRampToValueAtTime(2600, start + .045);
+      filter.frequency.exponentialRampToValueAtTime(1250, start + duration);
+      filter.Q.value = 2.2;
+
+      toneGain.gain.setValueAtTime(.0001, start);
+      toneGain.gain.exponentialRampToValueAtTime(volume, start + .025);
+      toneGain.gain.setValueAtTime(volume * .72, start + duration * .55);
+      toneGain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+
+      osc.connect(filter);
+      detuned.connect(filter);
+      filter.connect(toneGain);
+      toneGain.connect(master);
+      osc.start(start);
+      detuned.start(start);
+      osc.stop(start + duration + .04);
+      detuned.stop(start + duration + .04);
+      scheduleDisconnect(start + duration + .1, osc, detuned, filter, toneGain);
+    }
+
+    function playFanfareTail(start) {
+      const gain = ctx.createGain();
+      const delay = ctx.createDelay();
+      const feedback = ctx.createGain();
+      const oscillators = [];
+
+      delay.delayTime.setValueAtTime(.11, start);
+      feedback.gain.setValueAtTime(.18, start);
+      feedback.gain.exponentialRampToValueAtTime(.0001, start + .5);
+      gain.gain.setValueAtTime(.0001, start);
+      gain.gain.exponentialRampToValueAtTime(.036, start + .018);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + .42);
+
+      [156.00, 196.00].forEach((frequency, index) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(frequency, start + index * .03);
+        osc.frequency.exponentialRampToValueAtTime(frequency * .86, start + .32);
+        osc.connect(gain);
+        osc.start(start + index * .03);
+        osc.stop(start + .36);
+        oscillators.push(osc);
+      });
+
+      gain.connect(delay);
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(master);
+      scheduleDisconnect(start + .72, ...oscillators, gain, delay, feedback);
+    }
+
+    function setEnabled(value) {
+      enabled = Boolean(value);
+      if (master) master.gain.setValueAtTime(enabled ? .22 : 0, ctx.currentTime);
     }
 
     return {
       ensureStarted,
       getState() { return ctx ? ctx.state : "idle"; },
+      isEnabled() { return enabled; },
+      setEnabled,
       playFanfare,
       playHiss,
       playIvanGrunt
@@ -137,9 +367,13 @@
   }
 
   function createSilentAudio() {
+    let enabled = true;
+
     return {
       ensureStarted() {},
       getState() { return "unsupported"; },
+      isEnabled() { return enabled; },
+      setEnabled(value) { enabled = Boolean(value); },
       playFanfare() {},
       playHiss() {},
       playIvanGrunt() {}

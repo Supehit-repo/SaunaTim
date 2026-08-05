@@ -309,15 +309,15 @@
     ctx.fillStyle = "#fff1a8";
     ctx.strokeStyle = "rgba(0,0,0,.82)";
     ctx.lineWidth = 6;
-    ctx.font = "1000 54px system-ui";
-    strokeFillText(ctx, "MAINOSKATKO", 640, cardY + 62);
+    ctx.font = "1000 50px system-ui";
+    strokeFillText(ctx, "Mainoskatko", 640, cardY + 64);
 
     ctx.fillStyle = "#fff";
-    ctx.font = "900 28px system-ui";
-    strokeFillText(ctx, "Nallemehu — karhun lempeä voima", 640, cardY + 124);
+    ctx.font = "900 29px system-ui";
+    strokeFillText(ctx, "Tähän tulisi lopullisessa pelissä mainos,", 640, cardY + 134);
 
-    ctx.font = "800 23px system-ui";
-    strokeFillText(ctx, "Yksi osuma pulloon ja vastustajan ilme vaihtuu.", 640, cardY + 168);
+    ctx.font = "900 29px system-ui";
+    strokeFillText(ctx, "jolla saat Vladimirin.", 640, cardY + 176);
 
     ctx.save();
     ctx.translate(cardX + 146, cardY + 218);
@@ -333,10 +333,6 @@
 
     ctx.fillStyle = "#fff1a8";
     roundedRect(ctx, cardX + 253, cardY + 263, Math.max(0, 314 * progress), 16, 8, true, false);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "800 18px system-ui";
-    strokeFillText(ctx, "Klikkaa mainosta jatkaaksesi heti", 640, cardY + 318);
 
     ctx.restore();
   }

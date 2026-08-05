@@ -37,6 +37,17 @@ Nykyiset pääominaisuudet
 - Pelissä on kevyet selaimessa tuotetut ääniefektit: hieman pidempi veden suhaus, tulen pieni rätinä, kierrosfanfari ja Ivanin ähkäisy, kun hän on lähellä häviötä.
 - Kauhat/kauhatyyliset heittovälineet liikkuvat heiton aikana, vaikka pelimekaniikka on edelleen sama vedä ja päästä irti -heitto.
 
+Äänet mobiilissa
+-----------------
+
+- iOS:ssä ääni aktivoituu ensimmäisestä kosketuksesta. Jos puhelin on äänettömällä, poista äänetön tila pelin ääniä varten.
+
+Valikko
+-------
+
+- Oikean yläkulman burger-valikosta löytyvät Asetukset, tietosuojaseloste, käyttöehdot ja versionumero.
+- Asetuksista voi kytkeä pelin äänet päälle tai pois. Valinta muistetaan selaimessa.
+
 Kehitys
 -------
 

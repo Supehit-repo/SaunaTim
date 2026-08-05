@@ -17,8 +17,26 @@
   ];
 
   function drawProps(ctx, state) {
-    drawPlayerLadle(ctx, state, 0);
-    drawPlayerLadle(ctx, state, 1);
+    if (SaunaTim.render.characters.isPlayerSpriteReady(state)) {
+      drawLadleSplash(ctx, state, 0);
+    } else {
+      drawPlayerLadle(ctx, state, 0);
+    }
+
+    if (SaunaTim.render.characters.isOpponentSpriteReady(state)) {
+      drawLadleSplash(ctx, state, 1);
+    } else {
+      drawPlayerLadle(ctx, state, 1);
+    }
+  }
+
+  function drawLadleSplash(ctx, state, playerIndex) {
+    const pose = LADLE_POSES[playerIndex];
+    const swing = state.ladleSwing[playerIndex] || 0;
+    const progress = Math.max(0, Math.min(1, (SWING_DURATION - swing) / SWING_DURATION));
+    const motion = swing > 0 ? Math.sin(progress * Math.PI) : 0;
+
+    drawBucketSplash(ctx, pose.launch.x, pose.launch.y, pose.side, motion);
   }
 
   function drawPlayerLadle(ctx, state, playerIndex) {

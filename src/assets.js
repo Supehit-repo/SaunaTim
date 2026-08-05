@@ -1,9 +1,15 @@
 (function (SaunaTim) {
+  const images = new Map();
   const blackKeyedImages = new WeakMap();
 
   function loadImage(src) {
+    if (images.has(src)) {
+      return images.get(src);
+    }
+
     const image = new Image();
     image.src = src;
+    images.set(src, image);
     return image;
   }
 

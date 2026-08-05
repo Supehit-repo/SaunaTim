@@ -6,6 +6,7 @@
   const { drawNallemehu } = SaunaTim.render.nallemehu;
   const { drawProjectile } = SaunaTim.render.projectile;
   const { drawProps } = SaunaTim.render.props;
+  const { drawSponsors } = SaunaTim.render.sponsors;
   const { drawStove } = SaunaTim.render.stove;
   const { drawThermometers } = SaunaTim.render.thermometers;
   const { drawAimArc } = SaunaTim.render.trajectory;
@@ -20,11 +21,12 @@
       ctx.fillRect(0, 0, VIEWPORT.width, VIEWPORT.height);
     }
 
+    drawSponsors(ctx, state);
     drawThermometers(ctx, state);
+    drawCharacterOverlays(ctx, state);
     drawProps(ctx, state);
     drawStove(ctx, state);
     drawSkinRedness(ctx, state.players);
-    drawCharacterOverlays(ctx, state);
     drawAimArc(ctx, state, shotFromDrag);
     drawProjectile(ctx, state.projectile);
     drawEffects(ctx, state);

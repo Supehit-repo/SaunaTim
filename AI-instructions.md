@@ -61,6 +61,8 @@ Tasks came from the newer `todo.txt`.
 - Cleaned `assets/sauna-background.png` from the old static dotted throw trail by detecting the white trajectory components and inpainting only those small spots.
 - Restored the drag-time aiming arc and removed the ball-style aim indicator.
 - Extended the water hiss after stove hits in `src/systems/audio.js`.
+- iOS audio is primed in the first touch gesture and effects wait until the Web Audio context is running.
+- Nallemehu is a player-only event: Ivan's projectile cannot arm or hit its bottle.
 - Moved wall thermometers slightly upward/farther from Tim and Ivan heads in `src/render/thermometers.js`.
 - Increased hand ladle swing duration/amplitude so the throwing vessels visibly move during throws.
 
