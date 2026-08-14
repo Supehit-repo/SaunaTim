@@ -1,7 +1,7 @@
 (function (SaunaTim) {
   const { VIEWPORT } = SaunaTim.config;
   const { drawCharacterOverlays } = SaunaTim.render.characters;
-  const { drawEffects, drawFloatingTexts } = SaunaTim.render.effects;
+  const { drawEffects, drawStoveSteam, drawFloatingTexts } = SaunaTim.render.effects;
   const { drawHud, drawHudTopLayer } = SaunaTim.render.hud;
   const { drawNallemehu } = SaunaTim.render.nallemehu;
   const { drawProjectile } = SaunaTim.render.projectile;
@@ -29,6 +29,7 @@
     drawProjectile(ctx, state.projectile);
     drawEffects(ctx, state);
     drawStoveTopLayer(ctx, state);
+    drawStoveSteam(ctx, state);
     drawHud(ctx, state);
     drawNallemehu(ctx, state);
     drawFloatingTexts(ctx, state);

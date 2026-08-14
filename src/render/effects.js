@@ -2,7 +2,16 @@
   let bodySteamMistSprite = null;
 
   function drawEffects(ctx, state) {
+    drawParticleLayer(ctx, state, (particle) => particle.kind !== "stoveSteam");
+  }
+
+  function drawStoveSteam(ctx, state) {
+    drawParticleLayer(ctx, state, (particle) => particle.kind === "stoveSteam");
+  }
+
+  function drawParticleLayer(ctx, state, shouldDraw) {
     state.particles.forEach((particle) => {
+      if (!shouldDraw(particle)) return;
       const alpha = particle.life / particle.max;
       ctx.globalAlpha = alpha;
       if (particle.kind === "confetti") {
@@ -17,8 +26,8 @@
         ctx.beginPath();
         ctx.ellipse(particle.x, particle.y, particle.r * .7, particle.r * 1.7, 0, 0, Math.PI * 2);
         ctx.fill();
-      } else if (particle.kind === "bodySteam") {
-        drawBodySteam(ctx, particle, alpha);
+      } else if (particle.kind === "bodySteam" || particle.kind === "stoveSteam") {
+        drawMistSteam(ctx, particle, alpha);
       } else {
         ctx.fillStyle = "#eef4f7";
         ctx.beginPath();
@@ -29,7 +38,7 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawBodySteam(ctx, particle, alpha) {
+  function drawMistSteam(ctx, particle, alpha) {
     const age = 1 - alpha;
     const seed = particle.seed || 0;
     const stretch = particle.stretch || 1.08;
@@ -37,8 +46,9 @@
     const mistSprite = getBodySteamMistSprite();
     const width = particle.r * (3.2 + age * .75);
     const height = width * (1.65 + stretch * .2);
+    const opacity = particle.kind === "stoveSteam" ? .46 : .36;
 
-    ctx.globalAlpha = alpha * .36;
+    ctx.globalAlpha = alpha * opacity;
     ctx.drawImage(mistSprite, particle.x + sway - width / 2, particle.y - height * .62, width, height);
   }
 
@@ -88,6 +98,7 @@
 
   SaunaTim.render.effects = {
     drawEffects,
+    drawStoveSteam,
     drawFloatingTexts
   };
 })(window.SaunaTim = window.SaunaTim || {});

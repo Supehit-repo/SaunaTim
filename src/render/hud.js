@@ -23,8 +23,8 @@
   }
 
   function drawHudTopLayer(ctx, state) {
-    drawHealthHeart(ctx, 126, 43, 318, 52, state.players[0], 1);
-    drawHealthHeart(ctx, 836, 43, 318, 52, state.players[1], -1);
+    drawHealthHeart(ctx, 126, 43, 318, 52, state.players[0], -1);
+    drawHealthHeart(ctx, 836, 43, 318, 52, state.players[1], 1);
   }
 
   function drawHeartBox(ctx, x, y, width, height, player) {
@@ -67,7 +67,7 @@
     const heat = player.hp / MAX_HP;
     const pulse = player.heartPulse > 0 ? Math.sin(player.heartPulse * .52) * player.heartPulse / 44 : 0;
     const scale = 1 + Math.max(0, pulse);
-    const heartX = side > 0 ? x + width - 8 : x + 8;
+    const heartX = side > 0 ? x + width + 2 : x - 2;
     const heartY = y + height / 2 + 2;
 
     ctx.save();
@@ -76,7 +76,7 @@
     ctx.shadowColor = "rgba(0,0,0,.55)";
     ctx.shadowBlur = 2;
     ctx.shadowOffsetY = 3;
-    drawHeart(ctx, 0, 0, 18 + heat * 5);
+    drawHeart(ctx, 0, 0, 27 + heat * 7.5);
 
     ctx.restore();
   }

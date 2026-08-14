@@ -12,35 +12,32 @@
     const particleCount = Math.min(42, Math.max(12, Math.round(score * .45)));
 
     for (let i = 0; i < particleCount; i++) {
-      state.particles.push({
-        x: AIM.x + randomBetween(-85, 85),
-        y: AIM.y + randomBetween(-50, 45),
-        vx: randomBetween(-1.4, 1.4),
-        vy: randomBetween(-4.6, -1.1),
-        r: randomBetween(4, 13),
-        life: randomBetween(60, 110),
-        max: 110,
-        kind: "steam"
-      });
+      addStoveSteamParticle(state, score, 1);
     }
   }
 
-  function addFireBurst(state, score) {
+  function addStoveSteamBurst(state, score) {
     const particleCount = Math.min(28, Math.max(8, Math.round(score * .24)));
 
     for (let i = 0; i < particleCount; i++) {
-      state.particles.push({
-        x: AIM.x + randomBetween(-48, 48),
-        y: 546 + randomBetween(-20, 22),
-        vx: randomBetween(-.8, .8),
-        vy: randomBetween(-2.8, -1),
-        r: randomBetween(3, 7),
-        life: randomBetween(35, 62),
-        max: 62,
-        color: Math.random() < .55 ? "#ffdd4a" : "#ff7124",
-        kind: "spark"
-      });
+      addStoveSteamParticle(state, score, 1.25);
     }
+  }
+
+  function addStoveSteamParticle(state, score, intensity) {
+    state.particles.push({
+      x: AIM.x + randomBetween(-96, 96),
+      y: AIM.y - 32 + randomBetween(-10, 18),
+      vx: randomBetween(-.72, .72) * intensity,
+      vy: randomBetween(-3.05, -1.05) * intensity,
+      r: randomBetween(9 + score * .025, 20 + score * .08) * intensity,
+      life: randomBetween(58 + score * .14, 112 + score * .18),
+      max: 136,
+      seed: randomBetween(0, Math.PI * 2),
+      curl: randomBetween(.75, 1.35) * (Math.random() < .5 ? -1 : 1),
+      stretch: randomBetween(.98, 1.34),
+      kind: "stoveSteam"
+    });
   }
 
   function addConfetti(state, winnerIndex) {
@@ -73,10 +70,10 @@
       if (particle.kind === "confetti") {
         particle.vy += .075;
         particle.rotation += particle.spin;
-      } else if (particle.kind === "bodySteam") {
+      } else if (particle.kind === "bodySteam" || particle.kind === "stoveSteam") {
         particle.vx += Math.sin((particle.life + particle.seed) * .035) * .014 * (particle.curl || 1);
-        particle.vy -= .009;
-        particle.r *= 1.008;
+        particle.vy -= particle.kind === "stoveSteam" ? .018 : .009;
+        particle.r *= particle.kind === "stoveSteam" ? 1.012 : 1.008;
       } else if (particle.kind === "spark") {
         particle.vy += .018;
         particle.r *= .988;
@@ -143,9 +140,9 @@
   SaunaTim.systems = SaunaTim.systems || {};
   SaunaTim.systems.effects = {
     addConfetti,
-    addFireBurst,
     addFloatingText,
     addSteam,
+    addStoveSteamBurst,
     updateEffects
   };
 })(window.SaunaTim = window.SaunaTim || {});

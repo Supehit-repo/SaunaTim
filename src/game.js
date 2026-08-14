@@ -5,7 +5,7 @@
   const { clamp } = SaunaTim.utils;
   const { wireInput, isThrowStrongEnough } = SaunaTim.input;
   const { drawScene } = SaunaTim.render.scene;
-  const { addConfetti, addFireBurst, addFloatingText, addSteam, updateEffects } = SaunaTim.systems.effects;
+  const { addConfetti, addFloatingText, addSteam, addStoveSteamBurst, updateEffects } = SaunaTim.systems.effects;
   const { createGameAudio } = SaunaTim.systems.audio;
   const { createNpcThrow } = SaunaTim.systems.npc;
   const { createProgressionTracker, recordThrowResult } = SaunaTim.systems.progression;
@@ -444,7 +444,7 @@
 
         if (score >= 90) {
           this.state.fireBoost = Math.max(this.state.fireBoost, 160);
-          addFireBurst(this.state, score);
+          addStoveSteamBurst(this.state, score);
         }
 
         if (defenderIndex === 1 && MAX_HP - defender.hp <= 100) {
