@@ -6,8 +6,11 @@
     const canvas = game.canvas;
     const unlockAudio = () => game.startAudio();
 
-    // iOS Safari must see AudioContext.resume inside the same touch gesture.
+    // iOS Safari must see AudioContext.resume inside a real touch gesture.
+    // Keep both press and release paths because older WebKit builds are picky
+    // about which part of the gesture unlocks Web Audio.
     window.addEventListener("pointerdown", unlockAudio, { passive: true, capture: true });
+    window.addEventListener("pointerup", unlockAudio, { passive: true, capture: true });
     window.addEventListener("touchstart", unlockAudio, { passive: true, capture: true });
     window.addEventListener("touchend", unlockAudio, { passive: true, capture: true });
     window.addEventListener("click", unlockAudio, { passive: true, capture: true });
@@ -44,6 +47,7 @@
     });
 
     canvas.addEventListener("pointerup", () => {
+      game.startAudio();
       if (game.isCanvasInputBlocked?.()) {
         game.cancelDrag();
         return;

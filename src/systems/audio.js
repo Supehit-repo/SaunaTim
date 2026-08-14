@@ -33,7 +33,6 @@
         return Promise.resolve();
       }
 
-      if (startPromise) return startPromise;
       let resume = null;
       try {
         resume = ctx.resume();
@@ -49,7 +48,10 @@
 
       startPromise = resume
         .then(() => {
-          if (ctx && ctx.state === "running") finishStarting();
+          if (ctx && ctx.state === "running") {
+            finishStarting();
+            primeMobileAudio();
+          }
         })
         .catch(() => {})
         .finally(() => { startPromise = null; });
@@ -106,19 +108,24 @@
 
     function primeMobileAudio() {
       if (!ctx || !master) return;
-      if (primed) return;
-      primed = true;
+      if (primed && ctx.state === "running") return;
 
-      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const buffer = ctx.createBuffer(1, 8, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      data[0] = 1;
+      data[1] = .35;
+      data[2] = .12;
       const source = ctx.createBufferSource();
       const gain = ctx.createGain();
-      gain.gain.value = 0;
+      gain.gain.value = .00001;
       source.buffer = buffer;
       source.connect(gain);
       gain.connect(master);
       source.start(ctx.currentTime);
-      source.stop(ctx.currentTime + .01);
-      scheduleDisconnect(ctx.currentTime + .03, source, gain);
+      source.stop(ctx.currentTime + .02);
+      source.onended = () => disconnectNodes(source, gain);
+      window.setTimeout(() => disconnectNodes(source, gain), 1200);
+      if (ctx.state === "running") primed = true;
     }
 
     function startFireCrackle() {
