@@ -1,8 +1,8 @@
 (function (SaunaTim) {
   const { VIEWPORT } = SaunaTim.config;
   const { drawCharacterOverlays, drawSkinRedness } = SaunaTim.render.characters;
-  const { drawEffects } = SaunaTim.render.effects;
-  const { drawHud } = SaunaTim.render.hud;
+  const { drawEffects, drawFloatingTexts } = SaunaTim.render.effects;
+  const { drawHud, drawHudTopLayer } = SaunaTim.render.hud;
   const { drawNallemehu } = SaunaTim.render.nallemehu;
   const { drawProjectile } = SaunaTim.render.projectile;
   const { drawProps } = SaunaTim.render.props;
@@ -32,6 +32,8 @@
     drawEffects(ctx, state);
     drawHud(ctx, state);
     drawNallemehu(ctx, state);
+    drawFloatingTexts(ctx, state);
+    drawHudTopLayer(ctx, state);
   }
 
   SaunaTim.render.scene = {

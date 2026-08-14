@@ -35,8 +35,6 @@
       roundResultWinner: null,
       roundResultEndsMatch: false,
       msg: "Vedä ja päästä",
-      lastScoreText: "",
-      scoreFlash: 0,
       fireBoost: 0,
       ladleSwing: [0, 0],
       opponentVariant: "ivan",

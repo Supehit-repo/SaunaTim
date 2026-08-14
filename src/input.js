@@ -14,6 +14,7 @@
 
     canvas.addEventListener("pointerdown", (event) => {
       game.startAudio();
+      if (game.isCanvasInputBlocked?.()) return;
 
       const pointer = getCanvasPoint(canvas, event);
       if (game.handleCanvasClick?.(pointer)) return;
@@ -43,6 +44,10 @@
     });
 
     canvas.addEventListener("pointerup", () => {
+      if (game.isCanvasInputBlocked?.()) {
+        game.cancelDrag();
+        return;
+      }
       game.launchPlayerShot();
     });
 

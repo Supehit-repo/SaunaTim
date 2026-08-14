@@ -1,4 +1,5 @@
 (function (SaunaTim) {
+  const MENU_CLOSE_INPUT_GUARD_MS = 150;
   const canvas = document.getElementById("game");
   const game = new SaunaTim.SaunaTimGame(canvas);
 
@@ -17,6 +18,13 @@
     const setVisible = (visible) => {
       panel.hidden = !visible;
       toggle.hidden = visible;
+    };
+
+    let autoHiddenAfterThrow = false;
+    game.onSuccessfulPlayerThrow = () => {
+      if (autoHiddenAfterThrow) return;
+      autoHiddenAfterThrow = true;
+      setVisible(false);
     };
 
     close.addEventListener("click", () => {
@@ -72,20 +80,35 @@
       menuHome.hidden = visible;
       settingsPanel.hidden = !visible;
     };
-    const setMenuVisible = (visible) => {
+    const setMenuVisible = (visible, guardGameInput = false) => {
+      const wasVisible = !menuPanel.hidden;
       menuPanel.hidden = !visible;
       menuToggle.setAttribute("aria-expanded", String(visible));
       if (!visible) showSettings(false);
+      if (!visible && wasVisible && guardGameInput) {
+        game.blockCanvasInputFor?.(MENU_CLOSE_INPUT_GUARD_MS);
+      }
     };
     const closeLegal = () => { if (legalDialog) legalDialog.hidden = true; };
+    const setMenuButtonHidden = (hidden) => {
+      if (hidden) setMenuVisible(false, true);
+      menuToggle.hidden = hidden;
+    };
+
+    game.onRoundResultVisibleChange = setMenuButtonHidden;
+    setMenuButtonHidden(game.state.roundResultPending || (game.roundResultDialog && !game.roundResultDialog.hidden));
 
     menuToggle.addEventListener("click", () => {
       game.startAudio();
       setMenuVisible(menuPanel.hidden);
     });
     document.addEventListener("pointerdown", (event) => {
-      if (!menuPanel.hidden && !gameMenu.contains(event.target)) setMenuVisible(false);
-    });
+      if (menuPanel.hidden || gameMenu.contains(event.target)) return;
+
+      setMenuVisible(false, true);
+      event.preventDefault();
+      event.stopPropagation();
+    }, { capture: true });
     settingsOpen.addEventListener("click", () => showSettings(true));
     settingsBack.addEventListener("click", () => showSettings(false));
     soundsEnabled.addEventListener("change", () => {

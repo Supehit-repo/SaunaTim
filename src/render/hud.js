@@ -13,19 +13,22 @@
   function drawHud(ctx, state) {
     drawHeartBox(ctx, 126, 43, 318, 52, state.players[0]);
     drawHeartBox(ctx, 836, 43, 318, 52, state.players[1]);
+    drawPlayerName(ctx, 285, 32, state.players[0].name);
+    drawPlayerName(ctx, 995, 32, state.players[1].name);
     drawSaunaLogo(ctx);
     drawWins(ctx, 285, 119, state.players[0]);
     drawWins(ctx, 995, 119, state.players[1]);
     drawRoundAndMessage(ctx, state);
-    drawScoreFlash(ctx, state);
     if (state.gameOver) drawGameOver(ctx, state);
+  }
+
+  function drawHudTopLayer(ctx, state) {
+    drawHealthHeart(ctx, 126, 43, 318, 52, state.players[0], 1);
+    drawHealthHeart(ctx, 836, 43, 318, 52, state.players[1], -1);
   }
 
   function drawHeartBox(ctx, x, y, width, height, player) {
     const remaining = MAX_HP - player.hp;
-    const heat = player.hp / MAX_HP;
-    const pulse = player.heartPulse > 0 ? Math.sin(player.heartPulse * .52) * player.heartPulse / 44 : 0;
-    const scale = 1 + Math.max(0, pulse);
 
     ctx.save();
     ctx.fillStyle = "#23120b";
@@ -57,10 +60,41 @@
     ctx.strokeText(`${remaining}/${MAX_HP}`, x + width / 2 + 24, y + 29);
     ctx.fillText(`${remaining}/${MAX_HP}`, x + width / 2 + 24, y + 29);
 
-    ctx.translate(x + width / 2 + 60, y + 29);
-    ctx.scale(scale, scale);
-    drawHeart(ctx, 0, 0, 15 + heat * 3);
+    ctx.restore();
+  }
 
+  function drawHealthHeart(ctx, x, y, width, height, player, side) {
+    const heat = player.hp / MAX_HP;
+    const pulse = player.heartPulse > 0 ? Math.sin(player.heartPulse * .52) * player.heartPulse / 44 : 0;
+    const scale = 1 + Math.max(0, pulse);
+    const heartX = side > 0 ? x + width - 8 : x + 8;
+    const heartY = y + height / 2 + 2;
+
+    ctx.save();
+    ctx.translate(heartX, heartY);
+    ctx.scale(scale, scale);
+    ctx.shadowColor = "rgba(0,0,0,.55)";
+    ctx.shadowBlur = 7;
+    ctx.shadowOffsetY = 3;
+    drawHeart(ctx, 0, 0, 18 + heat * 5);
+
+    ctx.restore();
+  }
+
+  function drawPlayerName(ctx, x, y, name) {
+    ctx.save();
+    ctx.fillStyle = "#fff7dc";
+    ctx.strokeStyle = "rgba(0,0,0,.9)";
+    ctx.lineWidth = 5;
+    ctx.font = "1000 26px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.shadowColor = "rgba(0,0,0,.55)";
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
+    ctx.strokeText(name, x, y);
+    ctx.fillText(name, x, y);
     ctx.restore();
   }
 
@@ -298,26 +332,6 @@
     ctx.restore();
   }
 
-  function drawScoreFlash(ctx, state) {
-    if (state.scoreFlash <= 0 || !state.lastScoreText) return;
-
-    ctx.save();
-    ctx.globalAlpha = Math.min(1, state.scoreFlash / 25);
-    ctx.fillStyle = "rgba(0,0,0,.72)";
-    ctx.strokeStyle = "#d9964d";
-    ctx.lineWidth = 4;
-    roundedRect(ctx, 420, 245, 440, 62, 14, true, true);
-
-    ctx.fillStyle = "#fff1a8";
-    ctx.strokeStyle = "rgba(0,0,0,.85)";
-    ctx.lineWidth = 5;
-    ctx.font = "900 31px system-ui";
-    ctx.textAlign = "center";
-    ctx.strokeText(state.lastScoreText, 640, 286);
-    ctx.fillText(state.lastScoreText, 640, 286);
-    ctx.restore();
-  }
-
   function drawGameOver(ctx, state) {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,.68)";
@@ -340,6 +354,7 @@
   }
 
   SaunaTim.render.hud = {
-    drawHud
+    drawHud,
+    drawHudTopLayer
   };
 })(window.SaunaTim = window.SaunaTim || {});

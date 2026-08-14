@@ -20,6 +20,9 @@
       this.progression = createProgressionTracker();
       this.audio = createGameAudio();
       this.npcTimer = null;
+      this.onSuccessfulPlayerThrow = null;
+      this.onRoundResultVisibleChange = null;
+      this.inputBlockedUntil = 0;
       this.roundResultDialog = document.getElementById("roundResultDialog");
       this.roundResultTitle = document.getElementById("roundResultTitle");
       this.roundResultText = document.getElementById("roundResultText");
@@ -57,6 +60,15 @@
     cancelDrag() {
       this.state.dragging = false;
       this.state.dragNow = null;
+    }
+
+    blockCanvasInputFor(milliseconds = 150) {
+      this.inputBlockedUntil = Math.max(this.inputBlockedUntil, performance.now() + milliseconds);
+      this.cancelDrag();
+    }
+
+    isCanvasInputBlocked() {
+      return performance.now() < this.inputBlockedUntil;
     }
 
     setOpponentIdentity(name, variant) {
@@ -330,8 +342,6 @@
 
       this.setOpponentIdentity("VLADIMIR", "vladimir");
       this.state.msg = "Ivan muuttui Vladimiriksi!";
-      this.state.lastScoreText = "Nallemehu: Vladimir!";
-      this.state.scoreFlash = 120;
       addFloatingText(this.state, "VLADIMIR!", 1104, 306);
 
       if (owner === 0 || owner === 1) {
@@ -390,6 +400,7 @@
       this.armNallemehuShot(0);
       this.state.ladleSwing[0] = SaunaTim.render.props.SWING_DURATION;
       this.state.msg = "Sinä heität";
+      if (this.onSuccessfulPlayerThrow) this.onSuccessfulPlayerThrow();
     }
 
     scheduleNpcThrow() {
@@ -426,8 +437,7 @@
         defender.hp = clamp(defender.hp + score, 0, MAX_HP);
         defender.heartPulse = 28;
         attacker.score += score;
-        this.state.lastScoreText = `${attacker.name}: +${score} p`;
-        this.state.msg = this.state.lastScoreText;
+        this.state.msg = `${attacker.name}: +${score} p`;
         addFloatingText(this.state, `+${score}`, AIM.x, AIM.y - 85);
         addSteam(this.state, score);
         this.audio.playHiss(score);
@@ -441,12 +451,9 @@
           this.audio.playIvanGrunt();
         }
       } else {
-        this.state.lastScoreText = `${attacker.name}: OHI`;
-        this.state.msg = this.state.lastScoreText;
+        this.state.msg = `${attacker.name}: OHI`;
         addFloatingText(this.state, "OHI", AIM.x, AIM.y - 85);
       }
-
-      this.state.scoreFlash = 120;
 
       if (defender.hp >= MAX_HP) {
         this.finishRound(attackerIndex);
@@ -466,7 +473,6 @@
       const winner = this.state.players[winnerIndex];
       winner.wins++;
       this.state.msg = winnerIndex === 0 ? "Sinä voitit kierroksen!" : `${this.getOpponentName()} voitti kierroksen!`;
-      this.state.lastScoreText = this.state.msg;
       addConfetti(this.state, winnerIndex);
       this.audio.playFanfare();
 
@@ -477,6 +483,7 @@
     }
 
     showRoundResultDialog(winnerIndex, endsMatch) {
+      this.onRoundResultVisibleChange?.(true);
       if (!this.roundResultDialog) return;
 
       const playerWon = winnerIndex === 0;
@@ -490,6 +497,7 @@
 
     hideRoundResultDialog() {
       if (this.roundResultDialog) this.roundResultDialog.hidden = true;
+      this.onRoundResultVisibleChange?.(false);
     }
 
     confirmRoundResult() {
@@ -530,7 +538,6 @@
       this.state.roundResultPending = false;
       this.state.roundResultWinner = null;
       this.state.roundResultEndsMatch = false;
-      this.state.scoreFlash = 0;
       this.state.fireBoost = 0;
       this.state.ladleSwing = [0, 0];
       this.setOpponentIdentity("IVAN", "ivan");
@@ -596,7 +603,6 @@
         : this.state.wobble * .88;
       if (this.state.dragging) this.state.aimFrames++;
 
-      if (this.state.scoreFlash > 0) this.state.scoreFlash--;
       if (this.state.fireBoost > 0) this.state.fireBoost--;
       this.state.ladleSwing = this.state.ladleSwing.map((swing) => Math.max(0, swing - 1));
       this.state.players.forEach((player) => {

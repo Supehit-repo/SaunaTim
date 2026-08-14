@@ -4,6 +4,7 @@
 
 - Local folder: `E:\Pelit\SaunaTIM\SaunaTim`
 - Repository: `https://github.com/Supehit-repo/SaunaTim`
+- Canonical working copy for Codex work: use `E:\Pelit\SaunaTIM\SaunaTim`; ignore stale copies elsewhere unless the user explicitly asks.
 - Branch policy from user: keep work on `main`, avoid extra branches.
 - Delivery target: browser game that works by opening `index.html` directly. Do not introduce a required build step, module imports, package manager dependency, or server-only asset loading.
 

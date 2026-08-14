@@ -7,12 +7,16 @@
   }, {});
 
   const KYLASAUNA_BANNER = {
-    x: 499,
-    y: 207,
-    width: 282,
+    x: 485,
+    y: 190,
+    width: 310,
+    graphicWidth: 282,
     height: 107,
     sag: 10
   };
+  const CACHE_PADDING = 16;
+  let kylasaunaCache = null;
+  let kylasaunaCacheKey = "";
 
   function drawSponsors(ctx) {
     drawKylasaunaBanner(ctx);
@@ -20,20 +24,37 @@
 
   function drawKylasaunaBanner(ctx) {
     const banner = KYLASAUNA_BANNER;
-    const image = sponsorImages.kylasauna;
+    const cache = getKylasaunaCache(sponsorImages.kylasauna, banner);
 
     ctx.save();
     ctx.translate(banner.x + banner.width / 2, banner.y + banner.height / 2);
     ctx.rotate(-.014);
-    ctx.translate(-banner.width / 2, -banner.height / 2);
+    ctx.drawImage(cache, -banner.width / 2 - CACHE_PADDING, -banner.height / 2 - CACHE_PADDING);
+    ctx.restore();
+  }
 
+  function getKylasaunaCache(image, banner) {
+    const imageReady = image && image.complete && image.naturalWidth > 0;
+    const sizeKey = `${banner.width}x${banner.height}:${banner.graphicWidth || banner.width}:${banner.sag}`;
+    const cacheKey = imageReady ? `${image.src}:${image.naturalWidth}x${image.naturalHeight}:${sizeKey}` : `fallback:${sizeKey}`;
+    if (kylasaunaCache && kylasaunaCacheKey === cacheKey) return kylasaunaCache;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(banner.width + CACHE_PADDING * 2 + 12);
+    canvas.height = Math.ceil(banner.height + banner.sag + CACHE_PADDING * 2 + 12);
+
+    const ctx = canvas.getContext("2d");
+    ctx.translate(CACHE_PADDING, CACHE_PADDING);
     drawBannerShadow(ctx, banner);
-    drawSponsorImage(ctx, image, banner);
+    drawSponsorImage(ctx, imageReady ? image : null, banner);
     drawFabricTexture(ctx, banner);
+    drawBannerSideEffects(ctx, banner);
     drawBannerEdge(ctx, banner);
     drawCornerNails(ctx, banner);
 
-    ctx.restore();
+    kylasaunaCache = canvas;
+    kylasaunaCacheKey = cacheKey;
+    return kylasaunaCache;
   }
 
   function drawBannerShadow(ctx, banner) {
@@ -48,8 +69,10 @@
     ctx.save();
     drawBannerPath(ctx, banner);
     ctx.clip();
+    ctx.fillStyle = "rgba(43, 31, 18, .94)";
+    ctx.fillRect(0, 0, banner.width, banner.height + banner.sag);
 
-    if (image && image.complete && image.naturalWidth > 0) {
+    if (image) {
       drawSaggingImage(ctx, image, banner);
     } else {
       ctx.fillStyle = "rgba(36, 32, 25, .92)";
@@ -66,14 +89,16 @@
 
   function drawSaggingImage(ctx, image, banner) {
     const strips = 72;
+    const imageWidth = Math.min(banner.graphicWidth || banner.width, banner.width);
+    const imageLeft = (banner.width - imageWidth) / 2;
     const sourceStep = image.naturalWidth / strips;
-    const destStep = banner.width / strips;
+    const destStep = imageWidth / strips;
 
     for (let i = 0; i < strips; i++) {
-      const x = i * destStep;
-      const t = (i + .5) / strips;
-      const top = topSag(banner, t);
-      const bottom = banner.height + bottomSag(banner, t);
+      const x = imageLeft + i * destStep;
+      const bannerT = (x + destStep * .5) / banner.width;
+      const top = topSag(banner, bannerT);
+      const bottom = banner.height + bottomSag(banner, bannerT);
 
       ctx.drawImage(
         image,
@@ -125,16 +150,62 @@
     ctx.restore();
   }
 
+  function drawBannerSideEffects(ctx, banner) {
+    ctx.save();
+    drawBannerPath(ctx, banner);
+    ctx.clip();
+
+    const sideWidth = 18;
+    const leftShade = ctx.createLinearGradient(0, 0, sideWidth, 0);
+    leftShade.addColorStop(0, "rgba(0,0,0,.42)");
+    leftShade.addColorStop(.58, "rgba(86,54,24,.16)");
+    leftShade.addColorStop(1, "rgba(255,235,170,.1)");
+    ctx.fillStyle = leftShade;
+    ctx.fillRect(0, 0, sideWidth, banner.height + banner.sag + 2);
+
+    const rightShade = ctx.createLinearGradient(banner.width - sideWidth, 0, banner.width, 0);
+    rightShade.addColorStop(0, "rgba(255,235,170,.1)");
+    rightShade.addColorStop(.42, "rgba(86,54,24,.16)");
+    rightShade.addColorStop(1, "rgba(0,0,0,.42)");
+    ctx.fillStyle = rightShade;
+    ctx.fillRect(banner.width - sideWidth, 0, sideWidth, banner.height + banner.sag + 2);
+
+    ctx.strokeStyle = "rgba(255, 226, 146, .42)";
+    ctx.lineWidth = 1.5;
+    [sideWidth - 3, banner.width - sideWidth + 3].forEach((x) => {
+      ctx.beginPath();
+      ctx.moveTo(x, 8);
+      ctx.bezierCurveTo(x + (x < banner.width / 2 ? 3 : -3), 36, x, 74, x, banner.height + banner.sag - 7);
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = "rgba(36, 18, 7, .56)";
+    [7, banner.width - 7].forEach((x) => {
+      for (let y = 20; y < banner.height + banner.sag - 10; y += 17) {
+        ctx.beginPath();
+        ctx.ellipse(x, y, 2.2, 1.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    ctx.restore();
+  }
+
   function drawBannerEdge(ctx, banner) {
     ctx.save();
-    ctx.strokeStyle = "rgba(0, 0, 0, .72)";
-    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = "rgba(0, 0, 0, .82)";
+    ctx.lineWidth = 4.2;
     drawBannerPath(ctx, banner);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(255, 238, 185, .18)";
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(255, 238, 185, .48)";
+    ctx.lineWidth = 1.7;
     drawBannerPath(ctx, banner, 1, 1);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(137, 79, 28, .42)";
+    ctx.lineWidth = 1.1;
+    drawBannerPath(ctx, banner, -1, -1);
     ctx.stroke();
     ctx.restore();
   }

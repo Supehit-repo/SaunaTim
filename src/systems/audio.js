@@ -13,6 +13,8 @@
     let enabled = true;
     let loylyBuffer = null;
     let loylyLoadPromise = null;
+    let primed = false;
+    const lowPowerAudio = shouldUseLowPowerAudio();
 
     function ensureStarted() {
       if (!ctx) {
@@ -46,8 +48,10 @@
     function finishStarting() {
       if (started) return;
       started = true;
-      loadLoylySample();
-      startFireCrackle();
+      if (!lowPowerAudio) {
+        loadLoylySample();
+        startFireCrackle();
+      }
     }
 
     function disconnectNodes(...nodes) {
@@ -92,6 +96,8 @@
 
     function primeMobileAudio() {
       if (!ctx || !master) return;
+      if (primed) return;
+      primed = true;
 
       const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
       const source = ctx.createBufferSource();
@@ -106,12 +112,13 @@
     }
 
     function startFireCrackle() {
+      if (lowPowerAudio) return;
       if (crackleTimer) return;
 
       crackleTimer = window.setInterval(() => {
         if (!ctx || ctx.state !== "running") return;
-        if (Math.random() < .72) playNoiseBurst(.018, .025, 280, 1200);
-      }, 180);
+        if (Math.random() < .42) playNoiseBurst(.014, .02, 260, 1350);
+      }, 420);
     }
 
     function playNoiseBurst(volume, duration, lowpass, highpass) {
@@ -148,25 +155,27 @@
 
     function playHiss(score) {
       if (!started || !ctx || ctx.state !== "running") return;
+      if (lowPowerAudio) {
+        playLoylySizzle(score);
+        return;
+      }
       if (playLoylySample(score)) return;
 
       loadLoylySample();
-      const volume = Math.min(.15, .04 + score / 1200);
-      const duration = Math.min(1.35, .55 + score / 320);
-      playSoftNoiseBurst(volume, duration, 2700, 320);
+      playLoylySizzle(score);
     }
 
     function playLoylySample(score) {
       if (!loylyBuffer || !ctx || !master || ctx.state !== "running") return false;
 
       const now = ctx.currentTime;
-      const duration = Math.min(2.05, .95 + score / 190);
+      const duration = Math.min(3.8, 1.9 + score / 130);
       const startOffset = loylyBuffer.duration > duration + .16 ? .08 : 0;
       const source = ctx.createBufferSource();
       const gain = ctx.createGain();
       const low = ctx.createBiquadFilter();
       const high = ctx.createBiquadFilter();
-      const volume = Math.min(.18, .07 + score / 950);
+      const volume = Math.min(.44, .18 + score / 520);
 
       source.buffer = loylyBuffer;
       source.playbackRate.setValueAtTime(.96 + Math.random() * .08, now);
@@ -176,15 +185,16 @@
       high.Q.value = .25;
 
       low.type = "lowpass";
-      low.frequency.setValueAtTime(4700, now);
-      low.frequency.exponentialRampToValueAtTime(2600, now + duration);
+      low.frequency.setValueAtTime(6800, now);
+      low.frequency.exponentialRampToValueAtTime(1600, now + duration);
       low.Q.value = .35;
 
       gain.gain.setValueAtTime(.0001, now);
-      gain.gain.linearRampToValueAtTime(volume, now + .04);
-      gain.gain.setValueAtTime(volume * .92, now + Math.min(.3, duration * .36));
+      gain.gain.linearRampToValueAtTime(volume, now + .012);
+      gain.gain.setValueAtTime(volume * .88, now + Math.min(.6, duration * .32));
       gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
 
+      playSteamAttack(score, now);
       source.connect(high);
       high.connect(low);
       low.connect(gain);
@@ -193,6 +203,59 @@
       source.stop(now + duration + .04);
       scheduleDisconnect(now + duration + .08, source, high, low, gain);
       return true;
+    }
+
+    function playLoylySizzle(score) {
+      const now = ctx.currentTime;
+      const volume = Math.min(.5, .2 + score / 520);
+      const duration = Math.min(4.1, 2.1 + score / 150);
+
+      playSteamAttack(score, now);
+      playSoftNoiseBurst(volume, duration, 3900, 260);
+    }
+
+    function playSteamAttack(score, start = ctx.currentTime) {
+      if (!ctx || !master || ctx.state !== "running") return;
+
+      const duration = .38;
+      const sampleRate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      const volume = Math.min(.42, .18 + score / 560);
+
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        const bite = Math.pow(1 - t, 2.1);
+        data[i] = (Math.random() * 2 - 1) * bite;
+      }
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      const low = ctx.createBiquadFilter();
+      const high = ctx.createBiquadFilter();
+
+      low.type = "lowpass";
+      low.frequency.setValueAtTime(7800, start);
+      low.frequency.exponentialRampToValueAtTime(2600, start + duration);
+      low.Q.value = .25;
+
+      high.type = "highpass";
+      high.frequency.value = 420;
+      high.Q.value = .25;
+
+      gain.gain.setValueAtTime(.0001, start);
+      gain.gain.linearRampToValueAtTime(volume, start + .012);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+
+      source.buffer = buffer;
+      source.connect(high);
+      high.connect(low);
+      low.connect(gain);
+      gain.connect(master);
+      source.start(start);
+      source.stop(start + duration + .03);
+      scheduleDisconnect(start + duration + .08, source, high, low, gain);
     }
 
     function playIvanGrunt() {
@@ -252,9 +315,13 @@
       let smoothed = 0;
 
       for (let i = 0; i < length; i++) {
-        smoothed = smoothed * .84 + (Math.random() * 2 - 1) * .16;
+        const bright = Math.random() * 2 - 1;
+        smoothed = smoothed * .82 + bright * .18;
+        const t = i / length;
         const fadeOut = 1 - i / length;
-        data[i] = smoothed * Math.pow(fadeOut, .72);
+        const attack = Math.max(0, 1 - t / .16);
+        const envelope = Math.min(1, t / .028) * Math.pow(fadeOut, .38);
+        data[i] = (smoothed * .84 + bright * .16 * attack) * envelope;
       }
 
       const source = ctx.createBufferSource();
@@ -265,7 +332,7 @@
 
       low.type = "lowpass";
       low.frequency.setValueAtTime(lowpass, now);
-      low.frequency.exponentialRampToValueAtTime(Math.max(1200, lowpass * .58), now + duration);
+      low.frequency.exponentialRampToValueAtTime(Math.max(900, lowpass * .42), now + duration);
       low.Q.value = .45;
 
       high.type = "highpass";
@@ -273,7 +340,8 @@
       high.Q.value = .35;
 
       gain.gain.setValueAtTime(.0001, now);
-      gain.gain.linearRampToValueAtTime(volume, now + .075);
+      gain.gain.linearRampToValueAtTime(volume, now + .028);
+      gain.gain.setValueAtTime(volume * .76, now + Math.min(.75, duration * .38));
       gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
 
       source.buffer = buffer;
@@ -364,6 +432,19 @@
       playHiss,
       playIvanGrunt
     };
+  }
+
+  function shouldUseLowPowerAudio() {
+    const nav = window.navigator || {};
+    const userAgent = nav.userAgent || "";
+    const isAndroid = /Android/i.test(userAgent);
+    const isCoarsePointer = typeof window.matchMedia === "function"
+      && window.matchMedia("(pointer: coarse)").matches;
+    const lowCoreCount = typeof nav.hardwareConcurrency === "number"
+      && nav.hardwareConcurrency > 0
+      && nav.hardwareConcurrency <= 4;
+
+    return isAndroid || (isCoarsePointer && lowCoreCount);
   }
 
   function createSilentAudio() {
