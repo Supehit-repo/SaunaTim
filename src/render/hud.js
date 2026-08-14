@@ -74,7 +74,7 @@
     ctx.translate(heartX, heartY);
     ctx.scale(scale, scale);
     ctx.shadowColor = "rgba(0,0,0,.55)";
-    ctx.shadowBlur = 7;
+    ctx.shadowBlur = 2;
     ctx.shadowOffsetY = 3;
     drawHeart(ctx, 0, 0, 18 + heat * 5);
 
@@ -182,8 +182,8 @@
 
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.62)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 5;
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetY = 3;
     ctx.drawImage(
       saunaLogoImage,
       SAUNA_LOGO_CROP.sx,

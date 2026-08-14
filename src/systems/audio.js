@@ -15,6 +15,7 @@
     let loylyLoadPromise = null;
     let primed = false;
     const lowPowerAudio = shouldUseLowPowerAudio();
+    const continuousAmbientAudio = shouldUseContinuousAmbientAudio();
 
     function ensureStarted() {
       if (!ctx) {
@@ -33,8 +34,18 @@
       }
 
       if (startPromise) return startPromise;
-      const resume = ctx.resume();
-      if (!resume || typeof resume.then !== "function") return Promise.resolve();
+      let resume = null;
+      try {
+        resume = ctx.resume();
+      } catch (error) {
+        return Promise.resolve();
+      }
+      if (!resume || typeof resume.then !== "function") {
+        window.setTimeout(() => {
+          if (ctx && ctx.state === "running") finishStarting();
+        }, 0);
+        return Promise.resolve();
+      }
 
       startPromise = resume
         .then(() => {
@@ -48,8 +59,7 @@
     function finishStarting() {
       if (started) return;
       started = true;
-      if (!lowPowerAudio) {
-        loadLoylySample();
+      if (continuousAmbientAudio) {
         startFireCrackle();
       }
     }
@@ -112,17 +122,23 @@
     }
 
     function startFireCrackle() {
-      if (lowPowerAudio) return;
+      if (!continuousAmbientAudio) return;
       if (crackleTimer) return;
 
       crackleTimer = window.setInterval(() => {
-        if (!ctx || ctx.state !== "running") return;
+        if (!canPlay()) return;
         if (Math.random() < .42) playNoiseBurst(.014, .02, 260, 1350);
       }, 420);
     }
 
+    function canPlay() {
+      if (!ctx || !master || ctx.state !== "running") return false;
+      if (!started) finishStarting();
+      return true;
+    }
+
     function playNoiseBurst(volume, duration, lowpass, highpass) {
-      if (!ctx || !master || ctx.state !== "running") return;
+      if (!canPlay()) return;
       const sampleRate = ctx.sampleRate;
       const length = Math.max(1, Math.floor(sampleRate * duration));
       const buffer = ctx.createBuffer(1, length, sampleRate);
@@ -154,7 +170,7 @@
     }
 
     function playHiss(score) {
-      if (!started || !ctx || ctx.state !== "running") return;
+      if (!canPlay()) return;
       if (lowPowerAudio) {
         playLoylySizzle(score);
         return;
@@ -166,7 +182,7 @@
     }
 
     function playLoylySample(score) {
-      if (!loylyBuffer || !ctx || !master || ctx.state !== "running") return false;
+      if (!loylyBuffer || !canPlay()) return false;
 
       const now = ctx.currentTime;
       const duration = Math.min(3.8, 1.9 + score / 130);
@@ -215,7 +231,7 @@
     }
 
     function playSteamAttack(score, start = ctx.currentTime) {
-      if (!ctx || !master || ctx.state !== "running") return;
+      if (!canPlay()) return;
 
       const duration = .38;
       const sampleRate = ctx.sampleRate;
@@ -259,7 +275,7 @@
     }
 
     function playIvanGrunt() {
-      if (!started || !ctx || ctx.state !== "running") return;
+      if (!canPlay()) return;
 
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
@@ -282,7 +298,7 @@
     }
 
     function playFanfare() {
-      if (!started || !ctx || ctx.state !== "running") return;
+      if (!canPlay()) return;
 
       const now = ctx.currentTime + .02;
       const phrase = [
@@ -306,7 +322,7 @@
     }
 
     function playSoftNoiseBurst(volume, duration, lowpass, highpass) {
-      if (!ctx || !master || ctx.state !== "running") return;
+      if (!canPlay()) return;
 
       const sampleRate = ctx.sampleRate;
       const length = Math.max(1, Math.floor(sampleRate * duration));
@@ -438,13 +454,20 @@
     const nav = window.navigator || {};
     const userAgent = nav.userAgent || "";
     const isAndroid = /Android/i.test(userAgent);
+
+    return isAndroid;
+  }
+
+  function shouldUseContinuousAmbientAudio() {
+    const nav = window.navigator || {};
+    const userAgent = nav.userAgent || "";
+    const isAndroid = /Android/i.test(userAgent);
+    const isAppleMobile = /iPad|iPhone|iPod/i.test(userAgent)
+      || (/\bMacintosh\b/i.test(userAgent) && nav.maxTouchPoints > 1);
     const isCoarsePointer = typeof window.matchMedia === "function"
       && window.matchMedia("(pointer: coarse)").matches;
-    const lowCoreCount = typeof nav.hardwareConcurrency === "number"
-      && nav.hardwareConcurrency > 0
-      && nav.hardwareConcurrency <= 4;
 
-    return isAndroid || (isCoarsePointer && lowCoreCount);
+    return !isAndroid && !(isAppleMobile && isCoarsePointer);
   }
 
   function createSilentAudio() {

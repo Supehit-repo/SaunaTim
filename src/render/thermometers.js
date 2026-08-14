@@ -1,11 +1,13 @@
 (function (SaunaTim) {
   const { MAX_HP, TEMPERATURE } = SaunaTim.config;
   const { roundedRect } = SaunaTim.render.primitives;
+  const thermometerSprites = new Map();
 
   function drawThermometers(ctx, state) {
     const temperature = currentTemperature(state);
-    drawThermometer(ctx, 170, 154, temperature);
-    drawThermometer(ctx, 1090, 154, temperature);
+    const sprite = getThermometerSprite(temperature);
+    ctx.drawImage(sprite, 170 - sprite.width / 2, 154 - 12);
+    ctx.drawImage(sprite, 1090 - sprite.width / 2, 154 - 12);
   }
 
   function currentTemperature(state) {
@@ -13,12 +15,24 @@
     return Math.round(TEMPERATURE.base + (TEMPERATURE.max - TEMPERATURE.base) * hottest / MAX_HP);
   }
 
-  function drawThermometer(ctx, x, y, temperature) {
+  function getThermometerSprite(temperature) {
+    if (thermometerSprites.has(temperature)) return thermometerSprites.get(temperature);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 72;
+    canvas.height = 150;
+    const ctx = canvas.getContext("2d");
+    ctx.translate(canvas.width / 2, 12);
+    drawThermometer(ctx, temperature);
+    thermometerSprites.set(temperature, canvas);
+    return canvas;
+  }
+
+  function drawThermometer(ctx, temperature) {
     const fill = (temperature - TEMPERATURE.base) / (TEMPERATURE.max - TEMPERATURE.base);
     const clampedFill = Math.max(0, Math.min(1, fill));
 
     ctx.save();
-    ctx.translate(x, y);
 
     ctx.fillStyle = "rgba(34, 17, 7, .9)";
     ctx.strokeStyle = "rgba(12, 6, 3, .85)";

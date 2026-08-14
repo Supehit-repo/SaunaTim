@@ -1,14 +1,15 @@
 (function (SaunaTim) {
   const { AIM, MAX_HP } = SaunaTim.config;
   const { randomBetween } = SaunaTim.utils;
-  const MAX_PARTICLES = 180;
+  const MAX_PARTICLES = 132;
+  const MAX_BODY_STEAM_PARTICLES = 64;
 
   function addFloatingText(state, text, x, y) {
     state.texts.push({ text, x, y, life: 75, max: 75 });
   }
 
   function addSteam(state, score) {
-    const particleCount = Math.max(18, Math.round(score * .7));
+    const particleCount = Math.min(42, Math.max(12, Math.round(score * .45)));
 
     for (let i = 0; i < particleCount; i++) {
       state.particles.push({
@@ -25,7 +26,7 @@
   }
 
   function addFireBurst(state, score) {
-    const particleCount = Math.max(12, Math.round(score * .35));
+    const particleCount = Math.min(28, Math.max(8, Math.round(score * .24)));
 
     for (let i = 0; i < particleCount; i++) {
       state.particles.push({
@@ -46,7 +47,7 @@
     const originX = winnerIndex === 0 ? 335 : 945;
     const palette = ["#ffef6c", "#ff5b4a", "#69d4ff", "#7fd35a", "#ffffff"];
 
-    for (let i = 0; i < 56; i++) {
+    for (let i = 0; i < 42; i++) {
       state.particles.push({
         x: originX + randomBetween(-80, 80),
         y: 190 + randomBetween(-24, 24),
@@ -86,6 +87,7 @@
       particle.life--;
     });
     state.particles = state.particles.filter((particle) => particle.life > 0);
+    capParticleKind(state, "bodySteam", MAX_BODY_STEAM_PARTICLES);
     if (state.particles.length > MAX_PARTICLES) {
       state.particles.splice(0, state.particles.length - MAX_PARTICLES);
     }
@@ -105,30 +107,37 @@
 
     state.players.forEach((player, index) => {
       const heat = player.hp / MAX_HP;
-      if (heat < .14) return;
+      if (heat < .06) return;
 
-      const chance = (heat - .14) * .28;
+      const chance = (heat - .04) * .22;
       if (Math.random() >= chance) return;
 
       const origin = origins[index];
-      const burstCount = Math.random() < heat * .55 ? 2 : 1;
 
-      for (let i = 0; i < burstCount; i++) {
-        state.particles.push({
-          x: origin.x + randomBetween(-origin.spreadX * .55, origin.spreadX),
-          y: origin.y + randomBetween(-origin.spreadY * .5, origin.spreadY * .55),
-          vx: randomBetween(-.38, .38),
-          vy: randomBetween(-1.7, -.58),
-          r: randomBetween(8, 18 + heat * 14),
-          life: randomBetween(96, 168),
-          max: 168,
-          seed: randomBetween(0, Math.PI * 2),
-          curl: randomBetween(.65, 1.35) * (Math.random() < .5 ? -1 : 1),
-          stretch: randomBetween(.85, 1.35),
-          kind: "bodySteam"
-        });
-      }
+      state.particles.push({
+        x: origin.x + randomBetween(-origin.spreadX * .55, origin.spreadX),
+        y: origin.y + randomBetween(-origin.spreadY * .5, origin.spreadY * .55),
+        vx: randomBetween(-.26, .26),
+        vy: randomBetween(-1.35, -.5),
+        r: randomBetween(12, 22 + heat * 11),
+        life: randomBetween(60, 96),
+        max: 96,
+        seed: randomBetween(0, Math.PI * 2),
+        curl: randomBetween(.6, 1.25) * (Math.random() < .5 ? -1 : 1),
+        stretch: randomBetween(.86, 1.2),
+        kind: "bodySteam"
+      });
     });
+  }
+
+  function capParticleKind(state, kind, maxCount) {
+    let kept = 0;
+
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      if (state.particles[i].kind !== kind) continue;
+      kept++;
+      if (kept > maxCount) state.particles.splice(i, 1);
+    }
   }
 
   SaunaTim.systems = SaunaTim.systems || {};

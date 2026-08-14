@@ -1,4 +1,6 @@
 (function (SaunaTim) {
+  let bodySteamMistSprite = null;
+
   function drawEffects(ctx, state) {
     state.particles.forEach((particle) => {
       const alpha = particle.life / particle.max;
@@ -30,31 +32,44 @@
   function drawBodySteam(ctx, particle, alpha) {
     const age = 1 - alpha;
     const seed = particle.seed || 0;
-    const stretch = particle.stretch || 1;
-    const sway = Math.sin(seed + age * 7.4) * particle.r * .62;
-    const baseX = particle.x + sway;
-    const baseY = particle.y;
+    const stretch = particle.stretch || 1.08;
+    const sway = Math.sin(seed + age * 5.2) * particle.r * .55;
+    const mistSprite = getBodySteamMistSprite();
+    const width = particle.r * (3.2 + age * .75);
+    const height = width * (1.65 + stretch * .2);
 
-    ctx.save();
-    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = alpha * .36;
+    ctx.drawImage(mistSprite, particle.x + sway - width / 2, particle.y - height * .62, width, height);
+  }
 
-    for (let i = 0; i < 4; i++) {
-      const t = i / 3;
-      const puffX = baseX + Math.sin(seed * 1.7 + age * 8 + i) * particle.r * .86;
-      const puffY = baseY - particle.r * (i * .76 + age * 2.05);
-      const radius = particle.r * (1.12 + i * .3 + age * .78);
-      const gradient = ctx.createRadialGradient(puffX, puffY, 0, puffX, puffY, radius * 1.72);
-      gradient.addColorStop(0, `rgba(255,255,255,${alpha * (.2 - t * .035)})`);
-      gradient.addColorStop(.36, `rgba(241,247,250,${alpha * (.13 - t * .018)})`);
+  function getBodySteamMistSprite() {
+    if (bodySteamMistSprite) return bodySteamMistSprite;
+
+    const size = 96;
+    const center = size / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const spriteCtx = canvas.getContext("2d");
+
+    [
+      { x: center, y: center, radius: 42, alpha: .34 },
+      { x: center - 13, y: center + 6, radius: 34, alpha: .2 },
+      { x: center + 14, y: center - 7, radius: 31, alpha: .18 },
+      { x: center + 1, y: center - 18, radius: 28, alpha: .13 }
+    ].forEach((puff) => {
+      const gradient = spriteCtx.createRadialGradient(puff.x, puff.y, 0, puff.x, puff.y, puff.radius);
+      gradient.addColorStop(0, `rgba(255,255,255,${puff.alpha})`);
+      gradient.addColorStop(.34, `rgba(241,247,250,${puff.alpha * .58})`);
       gradient.addColorStop(1, "rgba(241,247,250,0)");
+      spriteCtx.fillStyle = gradient;
+      spriteCtx.beginPath();
+      spriteCtx.arc(puff.x, puff.y, puff.radius, 0, Math.PI * 2);
+      spriteCtx.fill();
+    });
 
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.ellipse(puffX, puffY, radius * 1.05, radius * (1.55 + stretch * .28), Math.sin(seed + i) * .18, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
+    bodySteamMistSprite = canvas;
+    return bodySteamMistSprite;
   }
 
   function drawFloatingTexts(ctx, state) {

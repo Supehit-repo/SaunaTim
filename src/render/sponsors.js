@@ -8,11 +8,11 @@
 
   const KYLASAUNA_BANNER = {
     x: 485,
-    y: 190,
+    y: 184,
     width: 310,
     graphicWidth: 282,
     height: 107,
-    sag: 10
+    sag: 6
   };
   const CACHE_PADDING = 16;
   let kylasaunaCache = null;

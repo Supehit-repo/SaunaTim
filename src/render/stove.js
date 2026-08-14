@@ -1,9 +1,45 @@
 (function (SaunaTim) {
   const { roundedRect } = SaunaTim.render.primitives;
+  const STOVE_CACHE = { x: 500, y: 354, width: 280, height: 240 };
+  let stoveStaticSprite = null;
 
   function drawStove(ctx, state) {
     ctx.save();
+    ctx.drawImage(getStoveStaticSprite(), STOVE_CACHE.x, STOVE_CACHE.y);
 
+    const fireBoost = state ? state.fireBoost / 160 : 0;
+    ctx.fillStyle = fireBoost > .2 ? "#c43a15" : "#8f1711";
+    roundedRect(ctx, 582, 528, 116, 42, 5, true, false);
+    ctx.fillStyle = fireBoost > .2 ? "rgba(255, 213, 69, .48)" : "rgba(255, 120, 32, .36)";
+    roundedRect(ctx, 602, 538, 76, 24, 12, true, false);
+
+    drawFlames(ctx, fireBoost);
+    drawFirewood(ctx);
+    drawFireGrate(ctx);
+
+    ctx.restore();
+  }
+
+  function drawStoveTopLayer(ctx) {
+    ctx.save();
+    drawStones(ctx);
+    ctx.restore();
+  }
+
+  function getStoveStaticSprite() {
+    if (stoveStaticSprite) return stoveStaticSprite;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = STOVE_CACHE.width;
+    canvas.height = STOVE_CACHE.height;
+    const ctx = canvas.getContext("2d");
+    ctx.translate(-STOVE_CACHE.x, -STOVE_CACHE.y);
+    drawStoveStatic(ctx);
+    stoveStaticSprite = canvas;
+    return stoveStaticSprite;
+  }
+
+  function drawStoveStatic(ctx) {
     const x = 515;
     const y = 390;
     const width = 250;
@@ -35,28 +71,7 @@
     ctx.fillStyle = "#111";
     roundedRect(ctx, 565, 515, 150, 65, 8, true, false);
 
-    const fireBoost = state ? state.fireBoost / 160 : 0;
-    const fire = ctx.createRadialGradient(640, 552, 4, 640, 552, 58 + fireBoost * 22);
-    fire.addColorStop(0, "#fff36c");
-    fire.addColorStop(.42, "#ff8a20");
-    fire.addColorStop(1, "#861711");
-    ctx.fillStyle = fire;
-    roundedRect(ctx, 582, 528, 116, 42, 5, true, false);
-
-    drawFlames(ctx, fireBoost);
-    drawFirewood(ctx);
-
-    ctx.strokeStyle = "rgba(0,0,0,.48)";
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 8; i++) {
-      ctx.beginPath();
-      ctx.moveTo(590 + i * 15, 568);
-      ctx.lineTo(596 + i * 13, 532 + Math.sin(i) * 4);
-      ctx.stroke();
-    }
-
     drawStones(ctx);
-    ctx.restore();
   }
 
   function drawFlames(ctx, fireBoost) {
@@ -123,6 +138,17 @@
     ctx.restore();
   }
 
+  function drawFireGrate(ctx) {
+    ctx.strokeStyle = "rgba(0,0,0,.48)";
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(590 + i * 15, 568);
+      ctx.lineTo(596 + i * 13, 532 + Math.sin(i) * 4);
+      ctx.stroke();
+    }
+  }
+
   function drawStones(ctx) {
     const stones = [
       [540, 382, 28, 17], [570, 372, 30, 18], [604, 367, 34, 20], [640, 365, 38, 22],
@@ -144,6 +170,7 @@
   }
 
   SaunaTim.render.stove = {
-    drawStove
+    drawStove,
+    drawStoveTopLayer
   };
 })(window.SaunaTim = window.SaunaTim || {});
