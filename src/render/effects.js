@@ -1,4 +1,5 @@
 (function (SaunaTim) {
+  const { isAppleTouchDevice } = SaunaTim.utils;
   let bodySteamMistSprite = null;
 
   function drawEffects(ctx, state) {
@@ -44,9 +45,10 @@
     const stretch = particle.stretch || 1.08;
     const sway = Math.sin(seed + age * 5.2) * particle.r * .55;
     const mistSprite = getBodySteamMistSprite();
-    const width = particle.r * (3.2 + age * .75);
+    const mobileScale = isAppleTouchDevice ? .72 : 1;
+    const width = particle.r * (3.2 + age * .75) * mobileScale;
     const height = width * (1.65 + stretch * .2);
-    const opacity = particle.kind === "stoveSteam" ? .46 : .36;
+    const opacity = (particle.kind === "stoveSteam" ? .46 : .36) * (isAppleTouchDevice ? .82 : 1);
 
     ctx.globalAlpha = alpha * opacity;
     ctx.drawImage(mistSprite, particle.x + sway - width / 2, particle.y - height * .62, width, height);

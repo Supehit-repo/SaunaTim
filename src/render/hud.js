@@ -2,6 +2,7 @@
   const { ASSETS, MAX_HP, VIEWPORT, WINS_TO_MATCH } = SaunaTim.config;
   const { loadImage } = SaunaTim.assets;
   const { roundedRect } = SaunaTim.render.primitives;
+  const { isAppleTouchDevice } = SaunaTim.utils;
   const saunaLogoImage = ASSETS.saunaLogo ? loadImage(ASSETS.saunaLogo) : null;
   const SAUNA_LOGO_CROP = {
     sx: 58,
@@ -74,7 +75,7 @@
     ctx.translate(heartX, heartY);
     ctx.scale(scale, scale);
     ctx.shadowColor = "rgba(0,0,0,.55)";
-    ctx.shadowBlur = 2;
+    ctx.shadowBlur = isAppleTouchDevice ? 0 : 2;
     ctx.shadowOffsetY = 3;
     drawHeart(ctx, 0, 0, 27 + heat * 7.5);
 
@@ -91,7 +92,7 @@
     ctx.textBaseline = "middle";
     ctx.lineJoin = "round";
     ctx.shadowColor = "rgba(0,0,0,.55)";
-    ctx.shadowBlur = 4;
+    ctx.shadowBlur = isAppleTouchDevice ? 0 : 4;
     ctx.shadowOffsetY = 2;
     ctx.strokeText(name, x, y);
     ctx.fillText(name, x, y);
@@ -182,7 +183,7 @@
 
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.62)";
-    ctx.shadowBlur = 2;
+    ctx.shadowBlur = isAppleTouchDevice ? 0 : 2;
     ctx.shadowOffsetY = 3;
     ctx.drawImage(
       saunaLogoImage,

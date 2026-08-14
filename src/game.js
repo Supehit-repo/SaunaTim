@@ -23,6 +23,7 @@
       this.onSuccessfulPlayerThrow = null;
       this.onRoundResultVisibleChange = null;
       this.inputBlockedUntil = 0;
+      this.lastFrameTime = 0;
       this.roundResultDialog = document.getElementById("roundResultDialog");
       this.roundResultTitle = document.getElementById("roundResultTitle");
       this.roundResultText = document.getElementById("roundResultText");
@@ -246,12 +247,12 @@
       this.state.msg = "Nallemehu valuu!";
     }
 
-    updateNallemehu() {
+    updateNallemehu(dt = 1) {
       const event = this.state.nallemehu;
       if (!event) return;
 
       if (event.phase === "dropping") {
-        event.age++;
+        event.age += dt;
         const progress = clamp(event.age / NALLEMEHU.bottle.dropFrames, 0, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
         event.x = NALLEMEHU.bottle.x + Math.sin(event.age * .18) * (1 - progress) * 18;
@@ -268,14 +269,14 @@
       }
 
       if (event.phase === "available" || event.phase === "armed") {
-        event.age++;
+        event.age += dt;
         event.x = NALLEMEHU.bottle.x + Math.sin(event.age * .045) * 4;
         event.y = NALLEMEHU.bottle.targetY + Math.sin(event.age * .06) * 3;
         return;
       }
 
       if (event.phase === "ad") {
-        event.adTimer--;
+        event.adTimer -= dt;
         if (event.adTimer <= 0) {
           this.finishNallemehuAd();
         }
@@ -560,16 +561,16 @@
       }, 850);
     }
 
-    updateProjectile() {
+    updateProjectile(dt = 1) {
       const projectile = this.state.projectile;
       if (!projectile) return;
 
       const previousX = projectile.x;
       const previousY = projectile.y;
 
-      projectile.x += projectile.vx;
-      projectile.y += projectile.vy;
-      projectile.vy += PHYSICS.gravity;
+      projectile.x += projectile.vx * dt;
+      projectile.y += projectile.vy * dt + PHYSICS.gravity * dt * (dt - 1) / 2;
+      projectile.vy += PHYSICS.gravity * dt;
 
       if (this.projectileHitsNallemehu(previousX, previousY, projectile)) {
         this.handleNallemehuProjectileHit(projectile.owner);
@@ -596,33 +597,39 @@
       }
     }
 
-    update() {
-      this.state.phase += 0.16;
-      this.state.wobble = this.state.dragging
-        ? clamp(this.state.wobble + .045, 0, 2.4)
-        : this.state.wobble * .88;
-      if (this.state.dragging) this.state.aimFrames++;
+    update(dt = 1) {
+      const step = clamp(dt || 1, .25, 2.5);
 
-      if (this.state.fireBoost > 0) this.state.fireBoost--;
-      this.state.ladleSwing = this.state.ladleSwing.map((swing) => Math.max(0, swing - 1));
+      this.state.phase += 0.16 * step;
+      this.state.wobble = this.state.dragging
+        ? clamp(this.state.wobble + .045 * step, 0, 2.4)
+        : this.state.wobble * Math.pow(.88, step);
+      if (this.state.dragging) this.state.aimFrames += step;
+
+      if (this.state.fireBoost > 0) this.state.fireBoost = Math.max(0, this.state.fireBoost - step);
+      this.state.ladleSwing = this.state.ladleSwing.map((swing) => Math.max(0, swing - step));
       this.state.players.forEach((player) => {
-        if (player.heartPulse > 0) player.heartPulse--;
+        if (player.heartPulse > 0) player.heartPulse = Math.max(0, player.heartPulse - step);
       });
 
       this.ensureNallemehuReleasedForPlayerTurn();
-      this.updateNallemehu();
-      this.updateProjectile();
-      updateEffects(this.state);
+      this.updateNallemehu(step);
+      this.updateProjectile(step);
+      updateEffects(this.state, step);
     }
 
     draw() {
       drawScene(this.ctx, this.background, this.state, () => this.shotFromDrag());
     }
 
-    loop() {
-      this.update();
+    loop(timestamp = performance.now()) {
+      const frameMs = this.lastFrameTime ? timestamp - this.lastFrameTime : 1000 / 60;
+      this.lastFrameTime = timestamp;
+      const dt = clamp(frameMs / (1000 / 60), .25, 2.5);
+
+      this.update(dt);
       this.draw();
-      window.requestAnimationFrame(() => this.loop());
+      window.requestAnimationFrame((nextTimestamp) => this.loop(nextTimestamp));
     }
   }
 
