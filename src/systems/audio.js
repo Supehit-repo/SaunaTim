@@ -461,8 +461,14 @@
     const nav = window.navigator || {};
     const userAgent = nav.userAgent || "";
     const isAndroid = /Android/i.test(userAgent);
+    const isAppleMobile = /iPad|iPhone|iPod/i.test(userAgent)
+      || (/\bMacintosh\b/i.test(userAgent) && nav.maxTouchPoints > 1);
 
-    return isAndroid;
+    // iOS Safari may decode the löyly MP3 but then play it back very quietly
+    // through Web Audio on later throws. The generated sizzle is the sound
+    // users already hear correctly on the first throw, so keep mobile Safari
+    // on that reliable path.
+    return isAndroid || isAppleMobile;
   }
 
   function shouldUseContinuousAmbientAudio() {
