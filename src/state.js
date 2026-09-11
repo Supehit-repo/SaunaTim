@@ -7,10 +7,7 @@
       age: 0,
       popupOpen: false,
       popupSeen: false,
-      shotOwner: null,
-      pendingTurn: null,
-      adTimer: 0,
-      hit: false
+      pendingTurn: null
     };
   }
 
@@ -37,7 +34,6 @@
       msg: "Vedä ja päästä",
       fireBoost: 0,
       ladleSwing: [0, 0],
-      opponentVariant: "ivan",
       nallemehu: createNallemehuState(),
       particles: [],
       texts: []

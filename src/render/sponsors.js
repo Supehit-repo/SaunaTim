@@ -7,12 +7,12 @@
   }, {});
 
   const KYLASAUNA_BANNER = {
-    x: 485,
-    y: 184,
-    width: 310,
-    graphicWidth: 282,
-    height: 107,
-    sag: 6
+    x: 439,
+    y: 168,
+    width: 403,
+    graphicWidth: 367,
+    height: 139,
+    sag: 8
   };
   const CACHE_PADDING = 16;
   let kylasaunaCache = null;

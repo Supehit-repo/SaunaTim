@@ -7,8 +7,7 @@
   const { drawProjectile } = SaunaTim.render.projectile;
   const { drawProps } = SaunaTim.render.props;
   const { drawSponsors } = SaunaTim.render.sponsors;
-  const { drawStove, drawStoveTopLayer } = SaunaTim.render.stove;
-  const { drawThermometers } = SaunaTim.render.thermometers;
+  const { drawStoveHeatEffect } = SaunaTim.render.stove;
   const { drawAimArc } = SaunaTim.render.trajectory;
 
   function drawScene(ctx, background, state, shotFromDrag) {
@@ -22,13 +21,11 @@
     }
 
     drawSponsors(ctx, state);
-    drawThermometers(ctx, state);
     drawCharacterOverlays(ctx, state);
     drawProps(ctx, state);
-    drawStove(ctx, state);
+    drawStoveHeatEffect(ctx, state);
     drawProjectile(ctx, state.projectile);
     drawEffects(ctx, state);
-    drawStoveTopLayer(ctx, state);
     drawStoveSteam(ctx, state);
     drawHud(ctx, state);
     drawNallemehu(ctx, state);

@@ -109,8 +109,8 @@
 
   function addPlayerHeatSteam(state, dt = 1) {
     const origins = [
-      { x: 230, y: 370, spreadX: 72, spreadY: 84 },
-      { x: 1036, y: 372, spreadX: 76, spreadY: 86 }
+      { x: 177, y: 296, spreadX: 86, spreadY: 101 },
+      { x: 1084, y: 298, spreadX: 91, spreadY: 103 }
     ];
 
     state.players.forEach((player, index) => {

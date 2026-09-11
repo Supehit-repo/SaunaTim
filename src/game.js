@@ -72,11 +72,6 @@
       return performance.now() < this.inputBlockedUntil;
     }
 
-    setOpponentIdentity(name, variant) {
-      this.state.players[1].name = name;
-      this.state.opponentVariant = variant;
-    }
-
     getOpponentName() {
       return this.state.players[1].name || "IVAN";
     }
@@ -89,17 +84,10 @@
       const event = this.state.nallemehu;
       if (!event) return false;
 
-      if (event.phase === "ad") {
-        this.finishNallemehuAd();
-        return true;
-      }
-
       if (event.popupOpen) {
         const action = this.getNallemehuPopupAction(point);
         if (action === "accept") {
           this.closeNallemehuPopup();
-        } else if (action === "decline") {
-          this.declineNallemehuPopup();
         }
         return true;
       }
@@ -109,28 +97,16 @@
 
     openNallemehuPopup(owner = this.state.turn) {
       const event = this.state.nallemehu;
-      if (!event || event.phase === "hidden" || event.phase === "ad" || event.phase === "done") return;
+      if (!event || event.phase === "hidden" || event.phase === "done") return;
 
       event.popupOpen = true;
+      event.phase = "reward";
       event.pendingTurn = owner;
-      event.shotOwner = null;
       this.cancelDrag();
-      this.state.msg = "Nallemehuun osui!";
+      this.state.msg = "Nallemehu-koodi!";
     }
 
     closeNallemehuPopup() {
-      const event = this.state.nallemehu;
-      if (!event || !event.popupOpen) return;
-
-      event.popupOpen = false;
-      event.popupSeen = true;
-      event.phase = "armed";
-      event.pendingTurn = event.pendingTurn ?? this.state.turn;
-      event.shotOwner = null;
-      this.state.msg = "Osu Nallemehuun seuraavalla heitolla!";
-    }
-
-    declineNallemehuPopup() {
       const event = this.state.nallemehu;
       if (!event || !event.popupOpen) return;
 
@@ -138,12 +114,13 @@
       event.phase = "done";
       event.popupOpen = false;
       event.popupSeen = true;
-      event.hit = false;
       event.pendingTurn = null;
-      event.shotOwner = null;
-      event.adTimer = 0;
-      this.state.msg = "Nallemehu ohitettu";
+      this.state.msg = "Koodi: SaunaTIM26";
 
+      this.finishNallemehuTurn(owner);
+    }
+
+    finishNallemehuTurn(owner) {
       if (owner === 0 || owner === 1) {
         this.state.roundThrows++;
         this.state.turn = 1 - owner;
@@ -155,15 +132,9 @@
     getNallemehuPopupAction(point) {
       const popup = NALLEMEHU.popup;
       const ok = {
-        x: popup.x + popup.width / 2 - 168,
+        x: popup.x + popup.width / 2 - 80,
         y: popup.y + popup.height - 66,
-        width: 132,
-        height: 44
-      };
-      const decline = {
-        x: popup.x + popup.width / 2 - 18,
-        y: popup.y + popup.height - 66,
-        width: 188,
+        width: 160,
         height: 44
       };
       const close = {
@@ -175,14 +146,8 @@
       const inOk = point.x >= ok.x && point.x <= ok.x + ok.width && point.y >= ok.y && point.y <= ok.y + ok.height;
       if (inOk) return "accept";
 
-      const inDecline = point.x >= decline.x
-        && point.x <= decline.x + decline.width
-        && point.y >= decline.y
-        && point.y <= decline.y + decline.height;
-      if (inDecline) return "decline";
-
       const inClose = Math.hypot(point.x - close.x, point.y - close.y) <= close.radius;
-      if (inClose) return "decline";
+      if (inClose) return "accept";
 
       return null;
     }
@@ -205,15 +170,6 @@
         && localX <= 48 + scaledPadding
         && localY >= -132 - scaledPadding
         && localY <= 88 + scaledPadding;
-    }
-
-    armNallemehuShot(owner) {
-      const event = this.state.nallemehu;
-      // Nallemehu is a player-only bonus event; Ivan must never arm it.
-      if (owner !== 0 || !event || event.phase !== "armed" || event.pendingTurn !== owner) return;
-
-      event.shotOwner = owner;
-      this.state.msg = "Osu pulloon!";
     }
 
     maybeReleaseNallemehu(attackerIndex) {
@@ -243,7 +199,6 @@
       event.popupOpen = false;
       event.popupSeen = false;
       event.pendingTurn = 0;
-      event.shotOwner = null;
       this.state.msg = "Nallemehu valuu!";
     }
 
@@ -268,18 +223,13 @@
         return;
       }
 
-      if (event.phase === "available" || event.phase === "armed") {
+      if (event.phase === "available") {
         event.age += dt;
+        const amplitude = NALLEMEHU.bottle.floatAmplitude || 0;
+        const speed = NALLEMEHU.bottle.floatSpeed || .06;
         event.x = NALLEMEHU.bottle.x + Math.sin(event.age * .045) * 4;
-        event.y = NALLEMEHU.bottle.targetY + Math.sin(event.age * .06) * 3;
+        event.y = NALLEMEHU.bottle.targetY + Math.sin(event.age * speed) * amplitude;
         return;
-      }
-
-      if (event.phase === "ad") {
-        event.adTimer -= dt;
-        if (event.adTimer <= 0) {
-          this.finishNallemehuAd();
-        }
       }
     }
 
@@ -289,7 +239,7 @@
       // turn or leave the game waiting for the player to dismiss a popup.
       if (projectile.owner !== 0) return false;
       if (!event || event.popupOpen) return false;
-      if (event.phase !== "dropping" && event.phase !== "available" && event.phase !== "armed") return false;
+      if (event.phase !== "dropping" && event.phase !== "available") return false;
 
       for (let i = 0; i <= 8; i++) {
         const t = i / 8;
@@ -307,60 +257,9 @@
       const event = this.state.nallemehu;
       if (owner !== 0 || !event) return;
 
-      if (event.phase === "armed" && event.shotOwner === owner) {
-        this.triggerNallemehuAd(owner);
-        return;
-      }
-
       if (event.phase === "dropping" || event.phase === "available") {
         this.openNallemehuPopup(owner);
       }
-    }
-
-    triggerNallemehuAd(owner) {
-      const event = this.state.nallemehu;
-      if (!event) return;
-
-      event.phase = "ad";
-      event.popupOpen = false;
-      event.hit = true;
-      event.shotOwner = owner;
-      event.pendingTurn = null;
-      event.adTimer = NALLEMEHU.adDuration;
-      this.cancelDrag();
-      this.state.msg = "Nallemehu osui!";
-    }
-
-    finishNallemehuAd() {
-      const event = this.state.nallemehu;
-      if (!event || event.phase !== "ad") return;
-
-      const owner = event.shotOwner;
-      event.phase = "done";
-      event.adTimer = 0;
-      event.shotOwner = null;
-      event.pendingTurn = null;
-
-      this.setOpponentIdentity("VLADIMIR", "vladimir");
-      this.state.msg = "Ivan muuttui Vladimiriksi!";
-      addFloatingText(this.state, "VLADIMIR!", 1104, 306);
-
-      if (owner === 0 || owner === 1) {
-        this.state.roundThrows++;
-        this.state.turn = 1 - owner;
-        this.state.aiThinking = false;
-        this.scheduleTurnMessage();
-      }
-    }
-
-    finishNallemehuShotIfMissed(owner) {
-      const event = this.state.nallemehu;
-      if (!event || event.phase !== "armed" || event.shotOwner !== owner) return;
-
-      event.phase = "done";
-      event.shotOwner = null;
-      event.pendingTurn = null;
-      event.popupOpen = false;
     }
 
     shotFromDrag() {
@@ -398,7 +297,6 @@
         vy: shot.vy,
         owner: 0
       };
-      this.armNallemehuShot(0);
       this.state.ladleSwing[0] = SaunaTim.render.props.SWING_DURATION;
       this.state.msg = "Sinä heität";
       if (this.onSuccessfulPlayerThrow) this.onSuccessfulPlayerThrow();
@@ -418,7 +316,6 @@
 
         this.state.projectile = createNpcThrow();
         this.state.projectile.owner = 1;
-        this.armNallemehuShot(1);
         this.state.msg = `${this.getOpponentName()} heittää`;
         this.state.ladleSwing[1] = SaunaTim.render.props.SWING_DURATION;
         this.state.aiThinking = false;
@@ -462,7 +359,6 @@
       }
 
       this.maybeReleaseNallemehu(attackerIndex);
-      this.finishNallemehuShotIfMissed(attackerIndex);
 
       this.state.turn = 1 - this.state.turn;
 
@@ -509,7 +405,6 @@
       this.state.roundResultWinner = null;
       this.state.roundResultEndsMatch = false;
       this.hideRoundResultDialog();
-      this.setOpponentIdentity("IVAN", "ivan");
 
       if (endsMatch) {
         this.state.gameOver = true;
@@ -541,7 +436,6 @@
       this.state.roundResultEndsMatch = false;
       this.state.fireBoost = 0;
       this.state.ladleSwing = [0, 0];
-      this.setOpponentIdentity("IVAN", "ivan");
       this.state.nallemehu = createNallemehuState();
       this.state.particles = [];
       this.state.texts = [];
